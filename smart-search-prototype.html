@@ -1443,6 +1443,25 @@ function handleFollowUp(rawQuery) {
   const intent = parseIntent(rawQuery);
   const pending = state.pendingIntent || {};
 
+  // If user pivots to a completely different intent (financing, greeting),
+  // reset awaiting state and handle it directly — no location needed for financing.
+  if (intent.type === "financing") {
+    state.awaitingZip = false;
+    state.awaitingCategory = false;
+    state.pendingIntent = null;
+    const aiText = `Great question! Snap Finance offers flexible lease-to-own options — no credit needed. Click below to start your lease application — it only takes a few minutes.`;
+    appendAiMsg(aiText);
+    renderFinancingCard(null);
+    return;
+  }
+  if (intent.type === "greeting") {
+    state.awaitingZip = false;
+    state.awaitingCategory = false;
+    state.pendingIntent = null;
+    appendAiMsg(`👋 Hi! What kind of store are you looking for?<br><br>${buildCategoryPromptHtml()}`);
+    return;
+  }
+
   if (state.awaitingCategory) {
     state.awaitingCategory = false;
     const mergedIntent = { ...pending, ...intent, type: "store_search" };
