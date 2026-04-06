@@ -99,11 +99,19 @@
       background: var(--white); border: 2px solid var(--gray-200);
       border-radius: var(--radius-xl); padding: 6px 6px 6px 18px;
       box-shadow: var(--shadow-md);
-      transition: border-color .2s var(--transition), box-shadow .2s;
+      transition: border-color .2s var(--transition), box-shadow .2s, border-radius .15s;
     }
     .search-bar:focus-within {
       border-color: var(--green);
       box-shadow: 0 0 0 4px rgba(27,132,74,.10), var(--shadow-md);
+    }
+    /* When dropdown open: flatten bottom of bar and merge with dropdown */
+    .search-wrapper.dropdown-open .search-bar {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: var(--gray-200);
+      border-color: var(--green);
+      box-shadow: none;
     }
     .search-ai-badge {
       display: flex; align-items: center; gap: 5px;
@@ -129,29 +137,52 @@
 
     /* ── Dropdown ─────────────────────────────────────────── */
     #dropdown {
-      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
-      background: var(--white); border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200);
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--white);
+      border: 2px solid var(--green);
+      border-top: 1px solid var(--gray-200); /* hairline separator from search bar */
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      box-shadow: 0 8px 24px rgba(27,132,74,.12);
       overflow: hidden; z-index: 200; display: none;
-      animation: fadeSlideIn .15s ease;
+      animation: fadeSlideIn .12s ease;
     }
     #dropdown.open { display: block; }
     .dropdown-section-label {
       font-size: 11px; font-weight: 700; letter-spacing: .6px;
-      color: var(--dark-60); text-transform: uppercase; padding: 12px 16px 6px;
+      color: var(--dark-60); text-transform: uppercase; padding: 10px 16px 4px;
     }
+    /* ── Amazon-style suggestion rows ── */
     .suggestion-item {
       display: flex; align-items: center; gap: 12px;
-      padding: 10px 16px; cursor: pointer; transition: background .1s;
+      padding: 8px 16px; cursor: pointer; transition: background .1s;
+      text-align: left;
     }
     .suggestion-item:hover, .suggestion-item.focused { background: var(--gray-100); }
+    /* All icons: small, muted, left-aligned — like Amazon's search icon */
     .suggestion-icon {
-      width: 32px; height: 32px; border-radius: 8px; background: var(--gray-100);
+      width: 28px; height: 28px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
+      color: var(--gray-500);
     }
-    .suggestion-text { font-size: 14px; color: var(--dark); }
-    .suggestion-text strong { font-weight: 600; }
+    .suggestion-icon svg { width: 15px; height: 15px; }
+    .suggestion-icon.cat-icon { font-size: 16px; color: inherit; }
+    .suggestion-body { flex: 1; min-width: 0; }
+    .suggestion-primary {
+      font-size: 14px; color: var(--dark);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-align: left;
+    }
+    /* Amazon pattern: typed portion = NORMAL, completion = BOLD */
+    .suggestion-primary .s-typed   { font-weight: 400; }
+    .suggestion-primary .s-bold    { font-weight: 700; }
+    .suggestion-secondary {
+      font-size: 12px; color: var(--dark-60); margin-top: 1px; text-align: left;
+    }
+    .suggestion-cat-tag {
+      font-size: 11px; color: var(--dark-60); white-space: nowrap; flex-shrink: 0;
+    }
+    /* Direct-search row */
+    .suggestion-item.direct-search .suggestion-primary { color: var(--green); }
     .dropdown-divider { height: 1px; background: var(--gray-200); margin: 6px 0; }
 
     /* Ask Snap AI panel — Fix #8: stronger visual identity */
@@ -385,6 +416,57 @@
       50%     { box-shadow: 0 0 0 6px rgba(27,132,74,0); }
     }
 
+    /* ── Sticky Chat Input Bar (appears after first message) ─ */
+    #chat-input-bar {
+      display: none; /* shown via JS after first search */
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.10);
+      padding: 12px 24px 16px;
+      animation: slideUpIn .25s var(--transition);
+    }
+    #chat-input-bar.visible { display: block; }
+    .chat-bar-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; align-items: center;
+      background: var(--white); border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl); padding: 6px 6px 6px 18px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .chat-bar-inner:focus-within {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(27,132,74,.10);
+    }
+    .chat-bar-label {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--green-light); color: var(--green);
+      font-size: 11px; font-weight: 700; letter-spacing: .4px;
+      padding: 4px 10px; border-radius: 20px; margin-right: 12px;
+      white-space: nowrap; text-transform: uppercase; flex-shrink: 0;
+    }
+    #chat-input {
+      flex: 1; border: none; outline: none; font-size: 15px;
+      color: var(--dark); font-family: inherit; background: transparent; min-width: 0;
+    }
+    #chat-input::placeholder { color: var(--dark-60); }
+    #chat-send-btn {
+      flex-shrink: 0; background: var(--green); color: white;
+      border: none; border-radius: 50%; width: 40px; height: 40px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s;
+    }
+    #chat-send-btn:hover  { background: var(--green-dark); }
+    #chat-send-btn:active { transform: scale(0.95); }
+    /* Pad main so last messages aren't hidden behind the bar */
+    body.chat-active main { padding-bottom: 100px; }
+
+    @keyframes slideUpIn {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 768px) {
       .hero { padding: 40px 16px 56px; }
@@ -465,11 +547,9 @@
         <button class="dropdown-close-btn" onclick="hideDropdown()">✕</button>
       </div>
 
-      <div class="dropdown-section-label">Quick Searches</div>
       <div id="suggestions-list"></div>
       <div class="dropdown-divider"></div>
 
-      <!-- Fix #8: Branded AI section header -->
       <div class="dropdown-ai-header">
         <span class="ai-pill">✦ Snap AI</span>
         <span style="font-size:11px;color:var(--dark-60);">Conversational search</span>
@@ -497,6 +577,25 @@
   <div id="chat-thread"></div>
   <div id="results-section"></div>
 </main>
+
+<!-- ── Sticky Chat Input Bar ─────────────────────────────── -->
+<div id="chat-input-bar">
+  <div class="chat-bar-inner">
+    <div class="chat-bar-label">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+      </svg>
+      Snap AI
+    </div>
+    <input id="chat-input" type="text" autocomplete="off"
+           placeholder="Ask a follow-up or search for something new…" />
+    <button id="chat-send-btn" onclick="handleChatBarSearch()" aria-label="Send">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+      </svg>
+    </button>
+  </div>
+</div>
 
 <script>
 /* ════════════════════════════════════════════════════════════
@@ -720,15 +819,132 @@ const AI_HINTS = [
   { trigger: /floor|carpet|hardwood|tile/i,                    hint: "Flooring project? I'll find Snap partner stores near you." },
 ];
 
-/* Quick suggestions for dropdown */
-const QUICK_SUGGESTIONS = [
-  { emoji:"🔧", label:"tires",       query:"tires near me" },
-  { emoji:"🛋️",  label:"furniture",  query:"furniture stores" },
-  { emoji:"💻", label:"electronics", query:"electronics stores" },
-  { emoji:"💍", label:"jewelry",     query:"jewelry stores" },
-  { emoji:"🏠", label:"appliances",  query:"appliance stores" },
-  { emoji:"🪵", label:"flooring",    query:"flooring stores" },
+/* ════════════════════════════════════════════════════════════
+   AMAZON-STYLE SUGGESTION ENGINE  (v2 — relevance-first)
+════════════════════════════════════════════════════════════ */
+
+// Static suggestion bank — pre-built phrases that complete as user types
+// Mirrors Amazon's approach: suggestions are completions of what's being typed
+const SUGGESTION_BANK = [
+  // Tires & Auto
+  { text:"tire shops near me",         cat:"tires",       emoji:"🔧" },
+  { text:"tires near me",              cat:"tires",       emoji:"🔧" },
+  { text:"tire rotation service",      cat:"tires",       emoji:"🔧" },
+  { text:"tire alignment near me",     cat:"tires",       emoji:"🔧" },
+  { text:"new tires and rims",         cat:"tires",       emoji:"🔧" },
+  { text:"tire repair shop",           cat:"tires",       emoji:"🔧" },
+  { text:"used tires near me",         cat:"tires",       emoji:"🔧" },
+  { text:"wheel and tire store",       cat:"tires",       emoji:"🔧" },
+  // Furniture
+  { text:"furniture stores near me",   cat:"furniture",   emoji:"🛋️" },
+  { text:"furniture financing",        cat:"furniture",   emoji:"🛋️" },
+  { text:"bedroom furniture stores",   cat:"furniture",   emoji:"🛋️" },
+  { text:"living room furniture",      cat:"furniture",   emoji:"🛋️" },
+  { text:"mattress stores near me",    cat:"furniture",   emoji:"🛋️" },
+  { text:"sofa and couch stores",      cat:"furniture",   emoji:"🛋️" },
+  // Electronics
+  { text:"electronics stores near me", cat:"electronics", emoji:"💻" },
+  { text:"electronics financing",      cat:"electronics", emoji:"💻" },
+  { text:"tv stores near me",          cat:"electronics", emoji:"💻" },
+  { text:"laptop stores near me",      cat:"electronics", emoji:"💻" },
+  { text:"gaming stores near me",      cat:"electronics", emoji:"💻" },
+  // Jewelry
+  { text:"jewelry stores near me",     cat:"jewelry",     emoji:"💍" },
+  { text:"jewelry financing",          cat:"jewelry",     emoji:"💍" },
+  { text:"engagement ring stores",     cat:"jewelry",     emoji:"💍" },
+  { text:"watch stores near me",       cat:"jewelry",     emoji:"💍" },
+  // Appliances
+  { text:"appliance stores near me",   cat:"appliances",  emoji:"🏠" },
+  { text:"appliance financing",        cat:"appliances",  emoji:"🏠" },
+  { text:"washer dryer stores",        cat:"appliances",  emoji:"🏠" },
+  { text:"refrigerator stores",        cat:"appliances",  emoji:"🏠" },
+  // Flooring
+  { text:"flooring stores near me",    cat:"flooring",    emoji:"🪵" },
+  { text:"flooring financing",         cat:"flooring",    emoji:"🪵" },
+  { text:"hardwood flooring stores",   cat:"flooring",    emoji:"🪵" },
+  { text:"carpet stores near me",      cat:"flooring",    emoji:"🪵" },
+  // Financing
+  { text:"apply for snap financing",   cat:"financing",   emoji:"💳" },
+  { text:"snap financing options",     cat:"financing",   emoji:"💳" },
+  { text:"financing with no credit",   cat:"financing",   emoji:"💳" },
+  { text:"financing near me",          cat:"financing",   emoji:"💳" },
 ];
+
+const SEARCH_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>`;
+const STORE_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 9l1-5h16l1 5"/><path d="M3 9v11a1 1 0 001 1h5v-6h6v6h5a1 1 0 001-1V9"/></svg>`;
+
+function generateSuggestions(raw) {
+  const q  = raw.trim();
+  const ql = q.toLowerCase();
+  const results = [];
+  const seen = new Set();
+
+  function push(s) {
+    const k = s.primary.toLowerCase();
+    if (!seen.has(k)) { seen.add(k); results.push(s); }
+  }
+
+  // ── 1. STORE NAME MATCHES ─────────────────────────────────────
+  // Only show if query is ≥3 chars and matches store name
+  if (ql.length >= 3) {
+    for (const store of MOCK_STORES) {
+      if (store.name.toLowerCase().includes(ql)) {
+        const cfg = CAT_CONFIG[store.category] || {};
+        push({ type:'store', primary: store.name,
+               secondary:`${store.city}, ${store.state} · ${cfg.label}`, query: store.name });
+        if (results.length >= 2) break;
+      }
+    }
+  }
+
+  // ── 2. SUGGESTION BANK COMPLETIONS (startsWith — like Amazon autocomplete) ──
+  const bankMatches = SUGGESTION_BANK.filter(s => s.text.startsWith(ql) && s.text !== ql);
+  for (const m of bankMatches.slice(0, 5)) {
+    push({ type:'phrase', primary: m.text, emoji: m.emoji, query: m.text });
+  }
+
+  // ── 3. BANK CONTAINS MATCH (fallback if nothing starts with query) ──
+  if (bankMatches.length === 0) {
+    const contains = SUGGESTION_BANK.filter(s => s.text.includes(ql) && s.text !== ql);
+    for (const m of contains.slice(0, 4)) {
+      push({ type:'phrase', primary: m.text, emoji: m.emoji, query: m.text });
+    }
+  }
+
+  // ── 4. CITY + CATEGORY COMBOS ─────────────────────────────────
+  // ONLY when category is clearly detected from the query — not for generic terms
+  const intent = parseIntent(q);
+  if (intent.category && intent.confidence >= 0.5 && !intent.location.city && results.length < 5) {
+    const cfg = CAT_CONFIG[intent.category];
+    const cities = ["San Jose","Austin","Dallas","New York","Chicago"];
+    for (const city of cities.slice(0, 3)) {
+      push({ type:'location', primary:`${cfg.label} in ${city}`, emoji:'📍', query:`${cfg.label} in ${city}` });
+    }
+  }
+
+  // ── 5. DIRECT SEARCH (always last) ────────────────────────────
+  push({ type:'direct', primary: q, query: q });
+
+  return results.slice(0, 7);
+}
+
+// Amazon text pattern: `typed_portion` normal weight + **completion bold**
+function buildLabel(primary, typed) {
+  const pl = primary.toLowerCase();
+  const tl = typed.toLowerCase();
+  if (pl.startsWith(tl) && tl.length < pl.length) {
+    return `<span class="s-typed">${escHtml(primary.slice(0, typed.length))}</span>`
+         + `<span class="s-bold">${escHtml(primary.slice(typed.length))}</span>`;
+  }
+  // query is contained but doesn't start → highlight matched portion
+  const idx = pl.indexOf(tl);
+  if (idx > 0) {
+    return escHtml(primary.slice(0, idx))
+         + `<span class="s-bold">${escHtml(primary.slice(idx, idx + typed.length))}</span>`
+         + escHtml(primary.slice(idx + typed.length));
+  }
+  return escHtml(primary);
+}
 
 /* ════════════════════════════════════════════════════════════
    FUZZY MATCHING
@@ -915,6 +1131,34 @@ function smartScroll(element) {
 /* ════════════════════════════════════════════════════════════
    UI HELPERS
 ════════════════════════════════════════════════════════════ */
+function showChatBar() {
+  const bar = document.getElementById("chat-input-bar");
+  if (!bar.classList.contains("visible")) {
+    bar.classList.add("visible");
+    document.body.classList.add("chat-active");
+    // Scroll into conversation — away from hero
+    setTimeout(() => {
+      document.getElementById("chat-thread")
+        .scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
+  // Always re-focus the chat bar input so user can type immediately
+  setTimeout(() => document.getElementById("chat-input")?.focus(), 150);
+}
+
+function handleChatBarSearch() {
+  const chatInput = document.getElementById("chat-input");
+  const val = chatInput.value.trim();
+  if (!val) return;
+  // Route through the main search handler by temporarily setting hero input
+  const heroInput = document.getElementById("search-input");
+  heroInput.value = val;
+  chatInput.value = "";
+  handleSearch();
+  // Keep focus on chat bar after sending
+  setTimeout(() => chatInput.focus(), 200);
+}
+
 function appendUserMsg(text) {
   const thread = document.getElementById("chat-thread");
   const row = document.createElement("div");
@@ -926,6 +1170,8 @@ function appendUserMsg(text) {
   // Always scroll to user's new message
   row.scrollIntoView({ behavior: "smooth", block: "end" });
   state.messages.push({ role: "user", text });
+  // Show sticky chat bar the moment conversation starts
+  showChatBar();
 }
 
 function appendAiMsg(html, delay = 600) {
@@ -1058,6 +1304,7 @@ function showWelcome() {
 
 function fillAndSearch(q) {
   document.getElementById("search-input").value = q;
+  document.getElementById("chat-input").value = "";
   handleSearch();
 }
 
@@ -1078,7 +1325,7 @@ async function handleSearch() {
   hideDropdown();
   appendUserMsg(rawQuery);
   input.value = "";
-  input.blur();
+  // Don't blur — let focus naturally move to chat bar
 
   // Follow-up if awaiting info
   if (state.awaitingZip || state.awaitingCategory) {
@@ -1288,23 +1535,41 @@ function onSearchInput() {
 }
 
 function updateDropdown(q) {
-  const ql = q.toLowerCase();
-  const matched = QUICK_SUGGESTIONS.filter(s =>
-    s.label.includes(ql) || ql.includes(s.label) ||
-    fuzzyMatch(ql.split(" ")[0], [s.label], 2)
-  );
-  const toShow = matched.length > 0 ? matched : QUICK_SUGGESTIONS.slice(0, 4);
+  const suggestions = generateSuggestions(q);
   const sugList = document.getElementById("suggestions-list");
-  sugList.innerHTML = toShow.slice(0, 5).map(s =>
-    `<div class="suggestion-item" onclick="fillAndSearch(${JSON.stringify(s.query)})">
-       <div class="suggestion-icon">${s.emoji}</div>
-       <div class="suggestion-text">${s.emoji} <strong>${s.label}</strong> near you</div>
-     </div>`
-  ).join("") +
-  `<div class="suggestion-item" onclick="fillAndSearch(${JSON.stringify(q)})">
-     <div class="suggestion-icon">🔍</div>
-     <div class="suggestion-text">Search for "<strong>${escHtml(q)}</strong>"</div>
-   </div>`;
+
+  sugList.innerHTML = suggestions.map(s => {
+    // Icon: store icon for stores, category emoji for phrases/locations, search icon for rest
+    let iconHtml;
+    if (s.type === 'store') {
+      iconHtml = `<div class="suggestion-icon">${STORE_SVG}</div>`;
+    } else if (s.emoji) {
+      iconHtml = `<div class="suggestion-icon cat-icon">${s.emoji}</div>`;
+    } else {
+      iconHtml = `<div class="suggestion-icon">${SEARCH_SVG}</div>`;
+    }
+
+    // Label: Amazon-style typed=normal, completion=bold
+    let labelHtml;
+    if (s.type === 'direct') {
+      labelHtml = `Search for "<strong>${escHtml(q)}</strong>"`;
+    } else {
+      labelHtml = buildLabel(s.primary, q);
+    }
+
+    const secondaryHtml = s.secondary
+      ? `<div class="suggestion-secondary">${escHtml(s.secondary)}</div>` : '';
+
+    const extraClass = s.type === 'direct' ? ' direct-search' : '';
+
+    return `<div class="suggestion-item${extraClass}" onclick="fillAndSearch(${JSON.stringify(s.query)});updateInputDisplay(${JSON.stringify(s.query)})">
+      ${iconHtml}
+      <div class="suggestion-body">
+        <div class="suggestion-primary">${labelHtml}</div>
+        ${secondaryHtml}
+      </div>
+    </div>`;
+  }).join('');
 
   document.getElementById("ai-panel-hint").textContent = getAiPanelHint(q);
 }
@@ -1314,8 +1579,22 @@ function handleAiPanelClick() {
   if (q) { hideDropdown(); handleSearch(); }
 }
 
-function showDropdown() { document.getElementById("dropdown").classList.add("open"); }
-function hideDropdown() { document.getElementById("dropdown").classList.remove("open"); }
+function showDropdown() {
+  document.getElementById("dropdown").classList.add("open");
+  document.querySelector(".search-wrapper").classList.add("dropdown-open");
+}
+function hideDropdown() {
+  document.getElementById("dropdown").classList.remove("open");
+  document.querySelector(".search-wrapper").classList.remove("dropdown-open");
+}
+
+// Show selected suggestion text in the input field (replaces typed text)
+function updateInputDisplay(text) {
+  const heroInput = document.getElementById("search-input");
+  const chatInput = document.getElementById("chat-input");
+  heroInput.value = text;
+  chatInput.value = "";
+}
 
 /* ════════════════════════════════════════════════════════════
    EVENT LISTENERS
@@ -1334,6 +1613,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (input.value.trim().length >= 2) showDropdown();
   });
   input.addEventListener("blur", () => setTimeout(hideDropdown, 200));
+
+  // Chat bar input (sticky bottom bar)
+  const chatInput = document.getElementById("chat-input");
+  chatInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); handleChatBarSearch(); }
+  });
+  chatInput.addEventListener("input", () => {
+    // Mirror typing into hero input so dropdown still works
+    const val = chatInput.value;
+    document.getElementById("search-input").value = val;
+    if (val.trim().length >= 2) { updateDropdown(val); showDropdown(); }
+    else hideDropdown();
+  });
 
   document.addEventListener("click", e => {
     if (!document.querySelector(".search-wrapper").contains(e.target)) hideDropdown();
