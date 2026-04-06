@@ -1341,7 +1341,7 @@ function showWelcome() {
       <h2>Ask me anything about stores</h2>
       <p>Type naturally — I understand what you're looking for, even with typos.</p>
       <div class="example-chips">
-        ${examples.map(e => `<div class="chip" onclick="fillAndSearch(${JSON.stringify(e.q)})">${e.label}</div>`).join("")}
+        ${examples.map(e => `<div class="chip" onclick="fillAndSearch('${e.q.replace(/'/g,"&#39;")}')">${e.label}</div>`).join("")}
       </div>
     </div>`;
 }
