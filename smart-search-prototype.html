@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snap Finance — Smart Store Search (AI-Powered)</title>
+  <style>
+    /* ── Brand Tokens ─────────────────────────────────────── */
+    :root {
+      --green:       #1b844a;
+      --green-dark:  #156638;
+      --green-light: #e8f5ee;
+      --blue:        #3d5ccf;
+      --blue-light:  #eef1fb;
+      --dark:        #353849;
+      --dark-60:     rgba(53,56,73,0.6);
+      --dark-10:     rgba(53,56,73,0.08);
+      --white:       #ffffff;
+      --gray-50:     #f8f9fa;
+      --gray-100:    #f0f2f5;
+      --gray-200:    #e2e6ea;
+      --gray-500:    #6b7280;
+      --amber:       #f59e0b;
+      --amber-light: #fffbeb;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.10);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.12);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,0.18);
+      --radius-sm:   6px;
+      --radius-md:   12px;
+      --radius-lg:   24px;
+      --radius-xl:   32px;
+      --transition:  cubic-bezier(0.4,0,0.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Aeonik","Inter",system-ui,-apple-system,sans-serif;
+      background: var(--gray-50); color: var(--dark); min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      background: var(--white); border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; z-index: 100; padding: 0 24px;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 21px; font-weight: 700; color: var(--green); letter-spacing: -.5px;
+    }
+    .logo-icon {
+      width: 32px; height: 32px; background: var(--green); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 16px; font-weight: 800;
+    }
+    nav { display: flex; gap: 4px; }
+    nav a {
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 500; color: var(--dark-60);
+      transition: background .15s var(--transition), color .15s;
+    }
+    nav a:hover { background: var(--gray-100); color: var(--dark); }
+    .nav-cta {
+      background: var(--green) !important; color: var(--white) !important;
+      border-radius: var(--radius-lg) !important;
+    }
+    .nav-cta:hover { background: var(--green-dark) !important; }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg,#f0faf4 0%,#e8f5ee 40%,#eef1fb 100%);
+      padding: 64px 24px 80px; text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(26px,4vw,46px); font-weight: 700;
+      color: var(--dark); line-height: 1.15; margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--green); }
+    .hero p {
+      font-size: 17px; color: var(--dark-60); max-width: 520px;
+      margin: 0 auto 36px; line-height: 1.6;
+    }
+    .geo-status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--green); font-weight: 600;
+      background: var(--green-light); padding: 4px 12px;
+      border-radius: 20px; margin-bottom: 20px;
+    }
+
+    /* ── Search Bar ───────────────────────────────────────── */
+    .search-wrapper { max-width: 680px; margin: 0 auto; position: relative; }
+    .search-bar {
+      display: flex; align-items: center;
+      background: var(--white); border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl); padding: 6px 6px 6px 18px;
+      box-shadow: var(--shadow-md);
+      transition: border-color .2s var(--transition), box-shadow .2s;
+    }
+    .search-bar:focus-within {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(27,132,74,.10), var(--shadow-md);
+    }
+    .search-ai-badge {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--green-light); color: var(--green);
+      font-size: 11px; font-weight: 700; letter-spacing: .4px;
+      padding: 4px 10px; border-radius: 20px; margin-right: 12px;
+      white-space: nowrap; text-transform: uppercase; flex-shrink: 0;
+    }
+    #search-input {
+      flex: 1; border: none; outline: none; font-size: 16px;
+      color: var(--dark); font-family: inherit; background: transparent; min-width: 0;
+    }
+    #search-input::placeholder { color: var(--dark-60); }
+    #search-btn {
+      flex-shrink: 0; background: var(--green); color: var(--white);
+      border: none; border-radius: 20px; padding: 12px 24px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background .15s, transform .1s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #search-btn:hover { background: var(--green-dark); }
+    #search-btn:active { transform: scale(0.97); }
+
+    /* ── Dropdown ─────────────────────────────────────────── */
+    #dropdown {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      background: var(--white); border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200);
+      overflow: hidden; z-index: 200; display: none;
+      animation: fadeSlideIn .15s ease;
+    }
+    #dropdown.open { display: block; }
+    .dropdown-section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .6px;
+      color: var(--dark-60); text-transform: uppercase; padding: 12px 16px 6px;
+    }
+    .suggestion-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px; cursor: pointer; transition: background .1s;
+    }
+    .suggestion-item:hover, .suggestion-item.focused { background: var(--gray-100); }
+    .suggestion-icon {
+      width: 32px; height: 32px; border-radius: 8px; background: var(--gray-100);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .suggestion-text { font-size: 14px; color: var(--dark); }
+    .suggestion-text strong { font-weight: 600; }
+    .dropdown-divider { height: 1px; background: var(--gray-200); margin: 6px 0; }
+
+    /* Ask Snap AI panel — Fix #8: stronger visual identity */
+    .dropdown-ai-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px 6px;
+    }
+    .ai-pill {
+      font-size: 11px; font-weight: 800; color: var(--green);
+      letter-spacing: .5px; text-transform: uppercase;
+      background: var(--green-light); padding: 3px 10px; border-radius: 20px;
+    }
+    .snap-ai-panel {
+      /* Fix #8: gradient bg + stronger green top border */
+      background: linear-gradient(135deg, #e8f5ee 0%, #eef1fb 100%);
+      border-top: 2px solid var(--green);
+      padding: 14px 16px; cursor: pointer; transition: filter .15s;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .snap-ai-panel:hover { filter: brightness(0.97); }
+    .snap-ai-avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800;
+      animation: aiPulse 2.5s ease-in-out infinite;
+    }
+    .snap-ai-content {}
+    .snap-ai-label {
+      font-size: 12px; font-weight: 800; color: var(--green);
+      letter-spacing: .8px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+    }
+    .snap-ai-hint { font-size: 14px; color: var(--dark); line-height: 1.45; }
+
+    /* Fix #6: Mobile full-screen dropdown overlay */
+    .dropdown-mobile-header {
+      display: none;
+      align-items: center; justify-content: space-between;
+      padding: 16px; border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; background: white; z-index: 1;
+    }
+    .dropdown-close-btn {
+      background: none; border: none; font-size: 24px;
+      cursor: pointer; color: var(--dark); padding: 4px 8px; line-height: 1;
+    }
+
+    /* ── Main Content ─────────────────────────────────────── */
+    main { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+    #chat-thread { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Message Bubbles ──────────────────────────────────── */
+    .msg-row {
+      display: flex; align-items: flex-end; gap: 10px;
+      animation: fadeSlideIn .25s ease;
+    }
+    .msg-row.user { flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+    .msg-avatar.ai   { background: var(--green); color: white; }
+    .msg-avatar.user { background: var(--blue);  color: white; }
+    .msg-bubble {
+      max-width: 75%; padding: 12px 16px; border-radius: var(--radius-md);
+      font-size: 15px; line-height: 1.55;
+    }
+    .msg-bubble.ai {
+      background: var(--white); color: var(--dark);
+      border: 1px solid var(--gray-200); border-bottom-left-radius: var(--radius-sm);
+      box-shadow: var(--shadow-sm);
+    }
+    .msg-bubble.user {
+      background: var(--green); color: white;
+      border-bottom-right-radius: var(--radius-sm);
+    }
+    /* Typing dots */
+    .typing-dots {
+      display: flex; align-items: center; gap: 4px; padding: 6px 0;
+    }
+    .typing-dots span {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--dark-60);
+      display: inline-block; animation: typingBounce 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .2s; }
+    .typing-dots span:nth-child(3) { animation-delay: .4s; }
+
+    /* ── Geo Button (Fix #10) ─────────────────────────────── */
+    .geo-btn {
+      background: var(--green); color: white; border: none;
+      padding: 9px 18px; border-radius: 20px; font-size: 14px;
+      font-weight: 600; cursor: pointer; margin-top: 10px;
+      transition: background .15s; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .geo-btn:hover { background: var(--green-dark); }
+
+    /* Category prompt buttons (Fix #2 fallback) */
+    .cat-prompt-btns {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+    }
+    .cat-prompt-btn {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 20px; padding: 7px 14px; font-size: 13px;
+      cursor: pointer; transition: border-color .15s, background .15s;
+      color: var(--dark); font-family: inherit;
+    }
+    .cat-prompt-btn:hover {
+      border-color: var(--green); background: var(--green-light); color: var(--green);
+    }
+
+    /* ── Store Cards ──────────────────────────────────────── */
+    #results-section { margin-top: 24px; }
+    .fallback-banner {
+      background: var(--amber-light); border: 1px solid var(--amber);
+      border-radius: var(--radius-sm); padding: 10px 16px; font-size: 14px;
+      color: #92400e; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .stores-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .store-card {
+      background: var(--white); border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200); padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s, transform .15s;
+      animation: fadeSlideIn .3s ease;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .store-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .store-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .store-name { font-size: 16px; font-weight: 700; color: var(--dark); line-height: 1.3; }
+    .category-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: .4px;
+      padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+      text-transform: uppercase; flex-shrink: 0;
+    }
+    .cat-tires       { background: #fff3cd; color: #856404; }
+    .cat-furniture   { background: #d1ecf1; color: #0c5460; }
+    .cat-electronics { background: var(--blue-light); color: var(--blue); }
+    .cat-jewelry     { background: #f8d7da; color: #721c24; }
+    .cat-appliances  { background: #d4edda; color: #155724; }
+    .cat-flooring    { background: #e2d9f3; color: #4b2e83; }
+    .store-address  { font-size: 13px; color: var(--dark-60); line-height: 1.4; }
+    .store-phone    { font-size: 13px; color: var(--green); font-weight: 600; }
+    .store-phone a  { color: inherit; }
+    .store-rating   { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+    .stars          { color: var(--amber); letter-spacing: -1px; font-size: 14px; }
+    .rating-count   { color: var(--dark-60); }
+    .snap-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--green-light); color: var(--green);
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+    }
+    .price-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--blue-light); color: var(--blue);
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+    }
+    .store-cta {
+      margin-top: auto; padding-top: 8px; border-top: 1px solid var(--gray-100);
+    }
+    .store-cta a {
+      display: inline-block; padding: 8px 18px;
+      border: 1.5px solid var(--green); border-radius: 20px;
+      color: var(--green); font-size: 13px; font-weight: 600;
+      transition: background .15s, color .15s;
+    }
+    .store-cta a:hover { background: var(--green); color: white; }
+
+    /* ── Financing Card — Fix #7: inline in chat thread ───── */
+    .financing-card {
+      background: var(--white); border: 2px solid var(--green);
+      border-radius: var(--radius-md); padding: 20px 24px;
+      box-shadow: var(--shadow-sm); animation: fadeSlideIn .3s ease;
+      display: flex; gap: 18px; align-items: flex-start; max-width: 520px;
+    }
+    .financing-icon {
+      width: 48px; height: 48px; background: var(--green-light);
+      border-radius: var(--radius-md); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .financing-body h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .financing-body p  { font-size: 13px; color: var(--dark-60); line-height: 1.6; margin-bottom: 14px; }
+    .financing-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--green); color: white; padding: 10px 20px;
+      border-radius: 20px; font-size: 14px; font-weight: 600;
+      transition: background .15s;
+    }
+    .financing-cta:hover { background: var(--green-dark); }
+    /* card row in chat */
+    .msg-row-card {
+      display: flex; gap: 10px; align-items: flex-start;
+      animation: fadeSlideIn .3s ease;
+    }
+
+    /* ── Welcome / Empty State ────────────────────────────── */
+    .welcome-state {
+      text-align: center; padding: 48px 24px;
+      animation: fadeSlideIn .3s ease;
+    }
+    .welcome-state .welcome-icon { font-size: 48px; margin-bottom: 16px; }
+    .welcome-state h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .welcome-state p  { font-size: 15px; color: var(--dark-60); margin-bottom: 24px; }
+    .example-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .chip {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 20px; padding: 8px 16px; font-size: 13px;
+      color: var(--dark); cursor: pointer;
+      transition: border-color .15s, background .15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .chip:hover { border-color: var(--green); background: var(--green-light); color: var(--green); }
+
+    /* ── Animations ───────────────────────────────────────── */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%           { transform: translateY(-6px); }
+    }
+    @keyframes aiPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(27,132,74,.3); }
+      50%     { box-shadow: 0 0 0 6px rgba(27,132,74,0); }
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero { padding: 40px 16px 56px; }
+      nav { display: none; }
+      main { padding: 20px 16px 60px; }
+      .search-ai-badge { display: none; }
+      #search-btn span { display: none; }
+      #search-btn { padding: 12px 14px; border-radius: 50%; }
+      .msg-bubble { max-width: 90%; }
+      .financing-card { flex-direction: column; max-width: 100%; }
+
+      /* Fix #6: Full-screen dropdown on mobile */
+      #dropdown {
+        position: fixed;
+        top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+        border-radius: 0; overflow-y: auto; z-index: 500;
+      }
+      #dropdown.open { display: flex !important; flex-direction: column; }
+      .dropdown-mobile-header { display: flex; }
+    }
+    @media (min-width: 769px) {
+      .dropdown-mobile-header { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">S</div>
+      snap finance
+    </div>
+    <nav>
+      <a href="#">Find Stores</a>
+      <a href="#">How It Works</a>
+      <a href="#">Manage</a>
+      <a href="https://getsnap.snapfinance.com/lease/en-US/consumer/apply/landing"
+         target="_blank" class="nav-cta">Apply Now</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ── Hero + Search ──────────────────────────────────────── -->
+<section class="hero" id="hero-section">
+  <h1>Find <span>Snap-Approved</span> Stores Near You</h1>
+  <p>Just tell us what you're looking for — our AI finds the right store for you.</p>
+
+  <!-- Geo status indicator (hidden until location is known) -->
+  <div class="geo-status" id="geo-status" style="display:none;">
+    📍 <span id="geo-status-text">Detecting location...</span>
+  </div>
+
+  <div class="search-wrapper">
+    <div class="search-bar">
+      <div class="search-ai-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+        </svg>
+        Snap AI
+      </div>
+      <input id="search-input" type="text" autocomplete="off"
+             placeholder='Try: "I need tires in San Jose" or "furniture near 78701"' />
+      <button id="search-btn" onclick="handleSearch()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <span>Search</span>
+      </button>
+    </div>
+
+    <!-- Dropdown -->
+    <div id="dropdown">
+      <!-- Fix #6: Mobile close button -->
+      <div class="dropdown-mobile-header">
+        <span style="font-weight:700;font-size:15px;">Search Snap Stores</span>
+        <button class="dropdown-close-btn" onclick="hideDropdown()">✕</button>
+      </div>
+
+      <div class="dropdown-section-label">Quick Searches</div>
+      <div id="suggestions-list"></div>
+      <div class="dropdown-divider"></div>
+
+      <!-- Fix #8: Branded AI section header -->
+      <div class="dropdown-ai-header">
+        <span class="ai-pill">✦ Snap AI</span>
+        <span style="font-size:11px;color:var(--dark-60);">Conversational search</span>
+      </div>
+      <div class="snap-ai-panel" id="ai-panel" onclick="handleAiPanelClick()">
+        <div class="snap-ai-avatar">S</div>
+        <div class="snap-ai-content">
+          <div class="snap-ai-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+            </svg>
+            Ask Snap AI
+          </div>
+          <div class="snap-ai-hint" id="ai-panel-hint">
+            Ask me anything — describe what you need and I'll find Snap-approved stores near you.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Main Content ───────────────────────────────────────── -->
+<main>
+  <div id="chat-thread"></div>
+  <div id="results-section"></div>
+</main>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   FIX #10: GEOLOCATION STATE
+════════════════════════════════════════════════════════════ */
+const geoState = { lat: null, lon: null, city: null, zip: null, fetched: false };
+
+function tryAutoGeolocate() {
+  if (!navigator.geolocation) return;
+  navigator.permissions?.query({ name: "geolocation" }).then(perm => {
+    if (perm.state === "granted") {
+      navigator.geolocation.getCurrentPosition(async pos => {
+        geoState.lat = pos.coords.latitude;
+        geoState.lon = pos.coords.longitude;
+        await reverseGeocode(geoState.lat, geoState.lon);
+        updateGeoStatusBadge();
+      });
+    }
+  }).catch(() => {}); // Permissions API not available — skip silently
+}
+
+async function reverseGeocode(lat, lon) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    const data = await res.json();
+    geoState.city = data.address?.city || data.address?.town || data.address?.village || null;
+    geoState.zip  = data.address?.postcode || null;
+    geoState.fetched = true;
+  } catch(e) { /* fail silently */ }
+}
+
+function updateGeoStatusBadge() {
+  const badge = document.getElementById("geo-status");
+  const label = document.getElementById("geo-status-text");
+  if (geoState.city || geoState.zip) {
+    const loc = geoState.city || `ZIP ${geoState.zip}`;
+    label.textContent = `Location detected: ${loc}`;
+    badge.style.display = "inline-flex";
+    // Update placeholder
+    document.getElementById("search-input").placeholder =
+      `Try: "I need tires" — using ${loc}`;
+  }
+}
+
+async function requestLocationOrAskZip(intent) {
+  const cfg = intent.category ? CAT_CONFIG[intent.category] : { emoji: "🏪", label: "Stores" };
+
+  // Already fetched location — use it
+  if (geoState.fetched && (geoState.city || geoState.zip)) {
+    const locLabel = geoState.city || `ZIP ${geoState.zip}`;
+    appendAiMsg(`📍 Using your current location: <strong>${locLabel}</strong> — searching now...`);
+    intent.location.city = geoState.city;
+    intent.location.zip  = geoState.zip;
+    setTimeout(() => runSearch(intent), 800);
+    return;
+  }
+
+  // Not fetched yet — offer geo button or text fallback
+  state.awaitingZip = true;
+  state.pendingIntent = intent;
+
+  const geoBtn = navigator.geolocation
+    ? `<br><button class="geo-btn" onclick="requestGeoAndSearch()">📍 Use my current location</button>
+       <span style="font-size:13px;color:var(--dark-60);margin-left:10px;">or type your ZIP/city below</span>`
+    : "";
+
+  appendAiMsg(
+    `${cfg.emoji} Looking for <strong>${cfg.label}</strong> stores — great choice!<br><br>
+     What's your <strong>ZIP code or city</strong>?${geoBtn}`
+  );
+}
+
+function requestGeoAndSearch() {
+  if (!navigator.geolocation) return;
+  appendAiMsg("⏳ Detecting your location...");
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      updateGeoStatusBadge();
+      if (geoState.city || geoState.zip) {
+        const locLabel = geoState.city || `ZIP ${geoState.zip}`;
+        appendAiMsg(`📍 Got it — <strong>${locLabel}</strong>. Searching now...`);
+        const intent = state.pendingIntent;
+        if (intent) {
+          intent.location.city = geoState.city;
+          intent.location.zip  = geoState.zip;
+          state.awaitingZip = false;
+          state.pendingIntent = null;
+          setTimeout(() => runSearch(intent), 600);
+        }
+      } else {
+        appendAiMsg("Couldn't determine your city. Please type your ZIP code or city name.");
+      }
+    },
+    () => {
+      appendAiMsg("Location access was denied. Please type your <strong>ZIP code</strong> or <strong>city</strong> and I'll find stores near you.");
+    }
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   MOCK DATA — FIX #4: 30 stores across 18 cities
+════════════════════════════════════════════════════════════ */
+const MOCK_STORES = [
+  // ── Tires ──────────────────────────────────────────────
+  { id:1,  name:"QuickFit Tire Center",       category:"tires",       city:"San Jose",     state:"CA", zip:"95101", address:"1240 Blossom Hill Rd",      phone:"(408) 555-0191", rating:4.3, reviews:187, snap:true },
+  { id:2,  name:"Precision Auto & Tires",     category:"tires",       city:"Austin",       state:"TX", zip:"78701", address:"312 E 6th St",               phone:"(512) 555-0342", rating:4.6, reviews:224, snap:true },
+  { id:3,  name:"Desert Wheel Works",         category:"tires",       city:"Phoenix",      state:"AZ", zip:"85001", address:"900 N Central Ave",          phone:"(602) 555-0187", rating:4.1, reviews:143, snap:true },
+  { id:4,  name:"Bay Area Tire Pros",         category:"tires",       city:"San Francisco",state:"CA", zip:"94102", address:"555 Market St",              phone:"(415) 555-0223", rating:4.4, reviews:198, snap:true },
+  { id:5,  name:"Lone Star Tire & Rim",       category:"tires",       city:"Houston",      state:"TX", zip:"77001", address:"2100 Main St",               phone:"(713) 555-0411", rating:4.2, reviews:156, snap:true },
+  { id:21, name:"LA Wheels & Tires",          category:"tires",       city:"Los Angeles",  state:"CA", zip:"90001", address:"400 S Figueroa St",          phone:"(213) 555-2101", rating:4.5, reviews:312, snap:true },
+  { id:22, name:"Queen City Auto Care",       category:"tires",       city:"Charlotte",    state:"NC", zip:"28201", address:"100 N Tryon St",             phone:"(704) 555-2201", rating:4.3, reviews:167, snap:true },
+  // ── Furniture ──────────────────────────────────────────
+  { id:6,  name:"ComfortCasa Furniture",      category:"furniture",   city:"San Jose",     state:"CA", zip:"95112", address:"450 N 1st St",               phone:"(408) 555-0612", rating:4.5, reviews:302, snap:true },
+  { id:7,  name:"Lone Star Home Furnishings", category:"furniture",   city:"Dallas",       state:"TX", zip:"75201", address:"1800 Commerce St",           phone:"(214) 555-0733", rating:4.3, reviews:178, snap:true },
+  { id:8,  name:"Vegas Living Room",          category:"furniture",   city:"Las Vegas",    state:"NV", zip:"89101", address:"300 Fremont St",             phone:"(702) 555-0821", rating:4.0, reviews:134, snap:true },
+  { id:9,  name:"Chicago Home Co.",           category:"furniture",   city:"Chicago",      state:"IL", zip:"60601", address:"22 W Adams St",              phone:"(312) 555-0912", rating:4.4, reviews:261, snap:true },
+  { id:10, name:"Atlanta Furniture Gallery",  category:"furniture",   city:"Atlanta",      state:"GA", zip:"30301", address:"180 Peachtree St NE",        phone:"(404) 555-1022", rating:4.2, reviews:189, snap:true },
+  { id:23, name:"Manhattan Home Furnishings", category:"furniture",   city:"New York",     state:"NY", zip:"10001", address:"350 W 34th St",              phone:"(212) 555-2301", rating:4.6, reviews:408, snap:true },
+  { id:24, name:"LA Living Furniture",        category:"furniture",   city:"Los Angeles",  state:"CA", zip:"90012", address:"800 S Broadway",             phone:"(213) 555-2401", rating:4.3, reviews:227, snap:true },
+  { id:25, name:"Queen City Furniture",       category:"furniture",   city:"Charlotte",    state:"NC", zip:"28202", address:"200 S College St",           phone:"(704) 555-2501", rating:4.1, reviews:143, snap:true },
+  // ── Electronics ────────────────────────────────────────
+  { id:11, name:"TechWorld Electronics",      category:"electronics", city:"Miami",        state:"FL", zip:"33101", address:"800 Brickell Ave",           phone:"(305) 555-1134", rating:4.6, reviews:412, snap:true },
+  { id:12, name:"Circuit Hub Austin",         category:"electronics", city:"Austin",       state:"TX", zip:"78704", address:"620 S Lamar Blvd",           phone:"(512) 555-1245", rating:4.5, reviews:337, snap:true },
+  { id:13, name:"Denver Tech Center",         category:"electronics", city:"Denver",       state:"CO", zip:"80201", address:"1700 Lincoln St",            phone:"(303) 555-1356", rating:4.3, reviews:218, snap:true },
+  { id:26, name:"NYC Tech Hub",               category:"electronics", city:"New York",     state:"NY", zip:"10002", address:"240 E Broadway",             phone:"(212) 555-2601", rating:4.7, reviews:519, snap:true },
+  { id:27, name:"PDX Electronics",            category:"electronics", city:"Portland",     state:"OR", zip:"97201", address:"1000 SW Broadway",           phone:"(503) 555-2701", rating:4.4, reviews:198, snap:true },
+  // ── Jewelry ────────────────────────────────────────────
+  { id:14, name:"Golden Mile Jewelry",        category:"jewelry",     city:"Las Vegas",    state:"NV", zip:"89109", address:"3600 Las Vegas Blvd S",      phone:"(702) 555-1467", rating:4.7, reviews:523, snap:true },
+  { id:15, name:"Orlando Fine Jewels",        category:"jewelry",     city:"Orlando",      state:"FL", zip:"32801", address:"455 Orange Ave",             phone:"(407) 555-1578", rating:4.4, reviews:296, snap:true },
+  { id:28, name:"Beacon Hill Jewelers",       category:"jewelry",     city:"Boston",       state:"MA", zip:"02101", address:"75 Charles St",              phone:"(617) 555-2801", rating:4.8, reviews:341, snap:true },
+  // ── Appliances ─────────────────────────────────────────
+  { id:16, name:"Phoenix Appliance Depot",    category:"appliances",  city:"Phoenix",      state:"AZ", zip:"85004", address:"101 N 1st Ave",              phone:"(602) 555-1689", rating:4.2, reviews:167, snap:true },
+  { id:17, name:"Mile High Appliances",       category:"appliances",  city:"Denver",       state:"CO", zip:"80202", address:"1600 Glenarm Pl",            phone:"(303) 555-1790", rating:4.5, reviews:234, snap:true },
+  { id:29, name:"Boston Home Appliances",     category:"appliances",  city:"Boston",       state:"MA", zip:"02102", address:"500 Atlantic Ave",           phone:"(617) 555-2901", rating:4.3, reviews:189, snap:true },
+  // ── Flooring ───────────────────────────────────────────
+  { id:18, name:"DFW Flooring Solutions",     category:"flooring",    city:"Dallas",       state:"TX", zip:"75202", address:"2000 Main St",               phone:"(214) 555-1891", rating:4.3, reviews:145, snap:true },
+  { id:19, name:"Sunshine Floors",            category:"flooring",    city:"Orlando",      state:"FL", zip:"32802", address:"600 W Amelia St",            phone:"(407) 555-1912", rating:4.1, reviews:112, snap:true },
+  { id:20, name:"Seattle Hardwood Co.",       category:"flooring",    city:"Seattle",      state:"WA", zip:"98101", address:"800 Pike St",                phone:"(206) 555-2023", rating:4.6, reviews:188, snap:true },
+  { id:30, name:"Rose City Flooring",         category:"flooring",    city:"Portland",     state:"OR", zip:"97202", address:"2100 SE Hawthorne Blvd",     phone:"(503) 555-3001", rating:4.4, reviews:156, snap:true },
+];
+
+/* FIX #1: Expanded CATEGORY_MAP with synonyms + colloquialisms */
+const CATEGORY_MAP = {
+  tires:       ["tire","tires","wheel","wheels","rim","rims","auto","rubber","rotation","alignment","car repair","vehicle","mechanic","flat","oil change","car service","lube","retread"],
+  furniture:   ["furniture","couch","sofa","chair","chairs","table","tables","bed","bedroom","mattress","dresser","wardrobe","living room","dining","recliner","sectional","ottoman","coffee table","nightstand","bookshelf","loveseat","futon","bunk bed","vanity"],
+  electronics: ["electronics","tv","television","laptop","computer","phone","gaming","stereo","tablet","monitor","headphone","speaker","camera","airpods","earbuds","smart tv","smart home","gaming console","controller","router","printer","projector"],
+  jewelry:     ["jewelry","jewellery","ring","rings","necklace","bracelet","watch","gold","diamond","gems","earring","pendant","engagement ring","anniversary","wedding band","charm","gemstone","bracelet"],
+  appliances:  ["appliance","appliances","washer","dryer","refrigerator","fridge","dishwasher","microwave","oven","stove","range","freezer","washing machine","tumble dryer","deep freeze","air conditioner","ac unit"],
+  flooring:    ["floor","flooring","carpet","hardwood","tile","laminate","vinyl","rug","wood floor","hardwood floor","area rug","wood plank","floor tile","floor mat","bamboo floor"],
+};
+
+/* FIX #1: TRICKY_PATTERNS — colloquialism overrides before fuzzy scan */
+const TRICKY_PATTERNS = [
+  { pattern: /rubber for.*car|new rubber|set of rubber|fix.*flat|flat tire|oil change|car.*service|check.*tire|rotate.*tire/i, category: "tires" },
+  { pattern: /place to sit|new couch|living room set|dining set|something to sleep on|bedroom set|new bed|replace.*mattress/i, category: "furniture" },
+  { pattern: /something.*watch|binge.*watch|new screen|game setup|gaming setup|stream.*show|new tv|big screen/i, category: "electronics" },
+  { pattern: /bling|sparkle|precious stone|engagement|anniversary gift|wedding ring|propose|get.*engaged/i, category: "jewelry" },
+  { pattern: /wash.*clothes|dry.*clothes|clean.*dishes|keep food cold|new fridge|replace.*washer|broken.*dryer/i, category: "appliances" },
+  { pattern: /cover.*floor|floor.*cover|new floor|replace.*floor|upgrade.*floor|redo.*floor|refinish.*floor/i, category: "flooring" },
+];
+
+/* FIX #2: Multi-pattern store name extraction */
+const STORE_NAME_PATTERNS = [
+  /(?:at|in the store|called|named|[-–:])\s+(.{3,50}?)(?:\?|$|,)/i,
+  /(?:does|do|is|will)\s+(.{3,50}?)\s+(?:take|accept|use|have|offer|do)\s+snap/i,
+  /snap.*(?:at|in)\s+(.{3,50}?)(?:\?|$)/i,
+  /(?:can i use snap|use snap financing)\s+(?:at|in)\s+(.{3,50}?)(?:\?|$)/i,
+];
+
+function extractStoreName(rawQuery) {
+  for (const pat of STORE_NAME_PATTERNS) {
+    const m = rawQuery.match(pat);
+    if (m) return m[1].trim();
+  }
+  return null;
+}
+
+/* City list — FIX #4: expanded */
+const CITY_LIST = [
+  "san jose","austin","phoenix","san francisco","houston","dallas","las vegas",
+  "chicago","atlanta","miami","denver","orlando","seattle","new york","los angeles",
+  "boston","portland","charlotte","nyc","la","new york city",
+];
+const CITY_STATE = {
+  "san jose":"CA","austin":"TX","phoenix":"AZ","san francisco":"CA","houston":"TX",
+  "dallas":"TX","las vegas":"NV","chicago":"IL","atlanta":"GA","miami":"FL",
+  "denver":"CO","orlando":"FL","seattle":"WA","new york":"NY","los angeles":"CA",
+  "boston":"MA","portland":"OR","charlotte":"NC","nyc":"NY","la":"CA","new york city":"NY",
+};
+const CITY_CANONICAL = { "nyc":"New York","la":"Los Angeles","new york city":"New York" };
+
+/* Financing trigger words */
+const FINANCING_WORDS = [
+  "financ","payment","payments","credit","lease","leasing","monthly",
+  "apply","qualify","afford","loan","bnpl","buy now pay","no credit",
+  "bad credit","interest","apr","rate"
+];
+
+/* Category display config */
+const CAT_CONFIG = {
+  tires:       { label:"Tires & Auto",  emoji:"🔧", cls:"cat-tires" },
+  furniture:   { label:"Furniture",     emoji:"🛋️",  cls:"cat-furniture" },
+  electronics: { label:"Electronics",   emoji:"💻", cls:"cat-electronics" },
+  jewelry:     { label:"Jewelry",       emoji:"💍", cls:"cat-jewelry" },
+  appliances:  { label:"Appliances",    emoji:"🏠", cls:"cat-appliances" },
+  flooring:    { label:"Flooring",      emoji:"🪵", cls:"cat-flooring" },
+};
+
+/* AI Hints for dropdown */
+const AI_HINTS = [
+  { trigger: /financ|payment|credit|loan|afford|apply/i,       hint: "Ask me about Snap financing — how to apply, no credit needed." },
+  { trigger: /tire|wheel|rim|auto|rubber/i,                    hint: "Looking for tire shops? Tell me your city or ZIP and I'll find stores." },
+  { trigger: /furni|couch|sofa|bed|mattress|chair/i,           hint: "Furniture stores? Share your location and I'll find Snap-approved stores near you." },
+  { trigger: /electr|tv|laptop|computer|phone|gaming/i,        hint: "Electronics on your list? I can find stores near you that accept Snap." },
+  { trigger: /jewel|ring|necklace|watch|diamond/i,             hint: "Shopping for jewelry? Let me find Snap-approved jewelers near you." },
+  { trigger: /appli|washer|dryer|fridge|oven|stove/i,          hint: "Need appliances? Tell me your location and I'll show you Snap stores." },
+  { trigger: /floor|carpet|hardwood|tile/i,                    hint: "Flooring project? I'll find Snap partner stores near you." },
+];
+
+/* Quick suggestions for dropdown */
+const QUICK_SUGGESTIONS = [
+  { emoji:"🔧", label:"tires",       query:"tires near me" },
+  { emoji:"🛋️",  label:"furniture",  query:"furniture stores" },
+  { emoji:"💻", label:"electronics", query:"electronics stores" },
+  { emoji:"💍", label:"jewelry",     query:"jewelry stores" },
+  { emoji:"🏠", label:"appliances",  query:"appliance stores" },
+  { emoji:"🪵", label:"flooring",    query:"flooring stores" },
+];
+
+/* ════════════════════════════════════════════════════════════
+   FUZZY MATCHING
+════════════════════════════════════════════════════════════ */
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function fuzzyMatch(word, dictionary, threshold = 2) {
+  let best = null, bestDist = Infinity;
+  for (const item of dictionary) {
+    const d = levenshtein(word.toLowerCase(), item.toLowerCase());
+    if (d < bestDist) { bestDist = d; best = item; }
+  }
+  return bestDist <= threshold ? best : null;
+}
+
+/* ════════════════════════════════════════════════════════════
+   INTENT DETECTION
+════════════════════════════════════════════════════════════ */
+function parseIntent(rawQuery) {
+  const q = rawQuery.toLowerCase().trim();
+  const tokens = q.replace(/[^a-z0-9\s$]/g, " ").split(/\s+/).filter(Boolean);
+
+  const intent = {
+    type: "store_search",
+    category: null,
+    location: { city: null, zip: null, state: null },
+    priceFilter: null,
+    storeName: null,
+    rawQuery,
+    confidence: 0,
+  };
+
+  // Greeting
+  const greetings = ["hi","hello","hey","howdy","yo","sup","hiya","good morning","good afternoon"];
+  if (greetings.includes(q.trim())) { intent.type = "greeting"; return intent; }
+
+  // Store name extraction (Fix #2) — run early for all queries
+  intent.storeName = extractStoreName(rawQuery);
+
+  // Financing intent (highest priority)
+  const hasFinancing = FINANCING_WORDS.some(fw => q.includes(fw));
+  if (hasFinancing) {
+    intent.type = "financing";
+    intent.confidence = 1.0;
+    return intent;
+  }
+
+  // Price filter (Fix #3: extract but don't filter — just display)
+  const underMatch   = q.match(/(?:under|less than|below|within|max|up to)\s+\$?(\d+)/);
+  const overMatch    = q.match(/(?:over|more than|above|at least|min)\s+\$?(\d+)/);
+  const betweenMatch = q.match(/between\s+\$?(\d+)\s+and\s+\$?(\d+)/);
+  if (betweenMatch) intent.priceFilter = { min: +betweenMatch[1], max: +betweenMatch[2] };
+  else if (underMatch) intent.priceFilter = { max: +underMatch[1] };
+  else if (overMatch)  intent.priceFilter = { min: +overMatch[1] };
+
+  // ZIP code
+  const zipMatch = q.match(/\b(\d{5})\b/);
+  if (zipMatch) intent.location.zip = zipMatch[1];
+
+  // FIX #1: Check TRICKY_PATTERNS first
+  for (const tp of TRICKY_PATTERNS) {
+    if (tp.pattern.test(rawQuery)) { intent.category = tp.category; break; }
+  }
+
+  // Category via fuzzy matching (if tricky patterns didn't match)
+  if (!intent.category) {
+    let bestScore = Infinity, bestCat = null;
+    for (const [cat, keywords] of Object.entries(CATEGORY_MAP)) {
+      // Direct substring — high confidence
+      for (const kw of keywords) {
+        if (q.includes(kw)) { bestCat = cat; bestScore = 0; break; }
+      }
+      if (bestScore === 0) break;
+      // Fuzzy token match
+      for (const token of tokens) {
+        const d = Math.min(...keywords.map(k => levenshtein(token, k)));
+        if (d < bestScore) { bestScore = d; bestCat = cat; }
+      }
+    }
+    if (bestScore <= 2) intent.category = bestCat;
+  }
+
+  // City detection
+  for (const city of CITY_LIST) {
+    if (q.includes(city)) {
+      const canonical = CITY_CANONICAL[city] || city.replace(/\b\w/g, c => c.toUpperCase());
+      intent.location.city = canonical;
+      intent.location.state = CITY_STATE[city];
+      break;
+    }
+  }
+  // Fuzzy single-word city check
+  if (!intent.location.city) {
+    for (const city of CITY_LIST.filter(c => !c.includes(" "))) {
+      if (fuzzyMatch(city, tokens, 1)) {
+        const canonical = CITY_CANONICAL[city] || city.replace(/\b\w/g, c => c.toUpperCase());
+        intent.location.city = canonical;
+        intent.location.state = CITY_STATE[city];
+        break;
+      }
+    }
+  }
+
+  // Confidence
+  let score = 0;
+  if (intent.category) score += 0.5;
+  if (intent.location.city || intent.location.zip) score += 0.4;
+  if (intent.priceFilter) score += 0.1;
+  intent.confidence = Math.min(score, 1.0);
+  return intent;
+}
+
+/* ════════════════════════════════════════════════════════════
+   STORE SEARCH
+════════════════════════════════════════════════════════════ */
+function searchStores(intent) {
+  let results = MOCK_STORES;
+  if (intent.category) results = results.filter(s => s.category === intent.category);
+  if (intent.location.city) {
+    const c = intent.location.city.toLowerCase();
+    results = results.filter(s => s.city.toLowerCase() === c);
+  } else if (intent.location.zip) {
+    const zipStore = MOCK_STORES.find(s => s.zip === intent.location.zip);
+    if (zipStore) results = results.filter(s => s.city === zipStore.city);
+  }
+  return results;
+}
+
+function fallbackSearch(intent) {
+  if (intent.category) return MOCK_STORES.filter(s => s.category === intent.category).slice(0, 4);
+  return MOCK_STORES.slice(0, 4);
+}
+
+function findStoreByName(name) {
+  if (!name) return null;
+  const n = name.toLowerCase();
+  return MOCK_STORES.find(s =>
+    s.name.toLowerCase().includes(n) || levenshtein(s.name.toLowerCase(), n) <= 5
+  ) || null;
+}
+
+/* ════════════════════════════════════════════════════════════
+   CONVERSATION STATE
+════════════════════════════════════════════════════════════ */
+const state = {
+  messages: [],
+  pendingIntent: null,
+  awaitingZip: false,
+  awaitingCategory: false,
+  lastShownStores: [],
+};
+
+/* FIX #9: Track if user has scrolled into chat area */
+let userInChat = false;
+window.addEventListener("scroll", () => {
+  const hero = document.getElementById("hero-section");
+  if (hero) userInChat = hero.getBoundingClientRect().bottom < 0;
+}, { passive: true });
+
+/* ════════════════════════════════════════════════════════════
+   FIX #9: SMART SCROLL — never scroll UP, only down if needed
+════════════════════════════════════════════════════════════ */
+function smartScroll(element) {
+  if (!element) return;
+  const rect = element.getBoundingClientRect();
+  const alreadyInView = rect.top >= -50 && rect.top <= window.innerHeight * 0.8;
+  const belowViewport = rect.top > window.innerHeight;
+  if (!alreadyInView && belowViewport) {
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  // If element is above viewport or partially visible — don't scroll; user is reading nearby content
+}
+
+/* ════════════════════════════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════════════════════════════ */
+function appendUserMsg(text) {
+  const thread = document.getElementById("chat-thread");
+  const row = document.createElement("div");
+  row.className = "msg-row user";
+  row.innerHTML = `
+    <div class="msg-avatar user">U</div>
+    <div class="msg-bubble user">${escHtml(text)}</div>`;
+  thread.appendChild(row);
+  // Always scroll to user's new message
+  row.scrollIntoView({ behavior: "smooth", block: "end" });
+  state.messages.push({ role: "user", text });
+}
+
+function appendAiMsg(html, delay = 600) {
+  const thread = document.getElementById("chat-thread");
+
+  // Typing indicator
+  const typingRow = document.createElement("div");
+  typingRow.className = "msg-row";
+  typingRow.innerHTML = `
+    <div class="msg-avatar ai">S</div>
+    <div class="msg-bubble ai">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>`;
+  thread.appendChild(typingRow);
+  // FIX #9: use nearest scroll — don't pull user back to top
+  typingRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  setTimeout(() => {
+    typingRow.remove();
+    const row = document.createElement("div");
+    row.className = "msg-row";
+    row.innerHTML = `
+      <div class="msg-avatar ai">S</div>
+      <div class="msg-bubble ai">${html}</div>`;
+    thread.appendChild(row);
+    // FIX #9: if user is in chat, use nearest (gentle); otherwise scroll to it
+    if (userInChat) {
+      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      row.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    state.messages.push({ role: "ai", text: html });
+  }, delay);
+}
+
+function renderStoreCards(stores, isFallback = false, priceFilter = null) {
+  const section = document.getElementById("results-section");
+  let html = "";
+  if (isFallback) {
+    const catLabel = stores[0] ? (CAT_CONFIG[stores[0].category]?.label || "similar") : "similar";
+    html += `<div class="fallback-banner">⚠️ No exact matches found — showing ${catLabel} stores you might like</div>`;
+  }
+  html += `<div class="stores-grid">`;
+  for (const s of stores) {
+    const cfg = CAT_CONFIG[s.category] || { label: s.category, emoji: "🏪", cls: "" };
+    const stars = "★".repeat(Math.floor(s.rating)) + (s.rating % 1 >= 0.5 ? "★" : "");
+    const priceBadge = priceFilter
+      ? `<span class="price-badge">💰 ${priceFilter.max ? "Under $"+priceFilter.max : ""}${priceFilter.min ? "Over $"+priceFilter.min : ""}</span>`
+      : "";
+    html += `
+      <div class="store-card">
+        <div class="store-card-top">
+          <div class="store-name">${escHtml(s.name)}</div>
+          <span class="category-badge ${cfg.cls}">${cfg.emoji} ${cfg.label}</span>
+        </div>
+        <div class="store-address">📍 ${escHtml(s.address)}, ${escHtml(s.city)}, ${escHtml(s.state)} ${escHtml(s.zip)}</div>
+        <div class="store-phone"><a href="tel:${s.phone}">${escHtml(s.phone)}</a></div>
+        <div class="store-rating">
+          <span class="stars">${stars}</span>
+          <span>${s.rating.toFixed(1)}</span>
+          <span class="rating-count">(${s.reviews} reviews)</span>
+        </div>
+        ${s.snap ? '<span class="snap-badge">✓ Snap Financing Accepted</span>' : ""}
+        ${priceBadge}
+        <div class="store-cta"><a href="#">View Store →</a></div>
+      </div>`;
+  }
+  html += `</div>`;
+  setTimeout(() => {
+    section.innerHTML = html;
+    smartScroll(section); // FIX #9: only scroll if section is off-screen below
+  }, 700);
+}
+
+/* FIX #7: Financing card appended to chat thread, not replacing results */
+function renderFinancingCard(storeName = null) {
+  const storeNote = storeName
+    ? `<p style="font-size:13px;color:var(--blue);margin-bottom:10px;">📌 Store queried: <strong>${escHtml(storeName)}</strong></p>`
+    : "";
+  const cardHtml = `
+    <div class="financing-card">
+      <div class="financing-icon">💳</div>
+      <div class="financing-body">
+        <h3>Snap Financing Available</h3>
+        ${storeNote}
+        <p>Snap Finance offers flexible lease-to-own options with no credit needed. Get approved in minutes and shop at thousands of partner stores.</p>
+        <a class="financing-cta" href="https://getsnap.snapfinance.com/lease/en-US/consumer/apply/landing" target="_blank">
+          Apply Now — It's Quick & Easy →
+        </a>
+      </div>
+    </div>`;
+
+  setTimeout(() => {
+    const thread = document.getElementById("chat-thread");
+    const row = document.createElement("div");
+    row.className = "msg-row-card";
+    row.innerHTML = `<div class="msg-avatar ai" style="align-self:flex-start;margin-top:4px;">S</div><div style="flex:1">${cardHtml}</div>`;
+    thread.appendChild(row);
+    // FIX #9: gentle scroll
+    if (userInChat) {
+      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      row.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    state.messages.push({ role: "ai", text: "[financing card]" });
+  }, 700);
+}
+
+function showWelcome() {
+  const examples = [
+    { label: "🔧 Tires in San Jose", q: "I need tires in San Jose" },
+    { label: "🛋️ Furniture near 78701", q: "furniture store near 78701" },
+    { label: "💻 Electronics in Miami", q: "electronics in Miami" },
+    { label: "💰 Financing options", q: "how do I apply for financing" },
+    { label: "🛏️ Mattress under $300", q: "I need a mattress within $300" },
+    { label: "💍 Jewelry in Las Vegas", q: "jewelry store near Las Vegas" },
+    { label: "🚗 Rubber for my car", q: "I want rubber for my car" },
+    { label: "🏢 Does a store take Snap?", q: "Does House of Furniture take Snap?" },
+  ];
+  document.getElementById("chat-thread").innerHTML = `
+    <div class="welcome-state">
+      <div class="welcome-icon">🔍</div>
+      <h2>Ask me anything about stores</h2>
+      <p>Type naturally — I understand what you're looking for, even with typos.</p>
+      <div class="example-chips">
+        ${examples.map(e => `<div class="chip" onclick="fillAndSearch(${JSON.stringify(e.q)})">${e.label}</div>`).join("")}
+      </div>
+    </div>`;
+}
+
+function fillAndSearch(q) {
+  document.getElementById("search-input").value = q;
+  handleSearch();
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ════════════════════════════════════════════════════════════
+   MAIN SEARCH HANDLER
+════════════════════════════════════════════════════════════ */
+async function handleSearch() {
+  const input = document.getElementById("search-input");
+  const rawQuery = input.value.trim();
+  if (!rawQuery) return;
+
+  hideDropdown();
+  appendUserMsg(rawQuery);
+  input.value = "";
+  input.blur();
+
+  // Follow-up if awaiting info
+  if (state.awaitingZip || state.awaitingCategory) {
+    handleFollowUp(rawQuery);
+    return;
+  }
+
+  const intent = parseIntent(rawQuery);
+
+  // Greeting
+  if (intent.type === "greeting") {
+    appendAiMsg(`👋 Hi there! I'm Snap AI — I help you find Snap-approved stores near you.<br><br>
+      Try asking:<br>
+      • <em>"I need tires in San Jose"</em><br>
+      • <em>"Furniture store near 78701"</em><br>
+      • <em>"How do I apply for financing?"</em><br>
+      • <em>"Does House of Furniture take Snap?"</em>`);
+    return;
+  }
+
+  // Financing intent
+  if (intent.type === "financing") {
+    const store = intent.storeName ? findStoreByName(intent.storeName) : null;
+    let aiText = `Great question! Snap Finance offers flexible lease-to-own options — no credit needed.`;
+    if (intent.storeName && store) {
+      aiText += ` I found <strong>${escHtml(store.name)}</strong> in our partner network — Snap financing is accepted there! ✅`;
+    } else if (intent.storeName) {
+      aiText += ` I couldn't find <strong>${escHtml(intent.storeName)}</strong> in our current network.`;
+      aiText += buildCategoryPromptHtml(" Want to search for a similar store?");
+    } else {
+      aiText += ` Click below to start your application — takes just a few minutes.`;
+    }
+    appendAiMsg(aiText);
+    renderFinancingCard(store ? store.name : (intent.storeName || null));
+    return;
+  }
+
+  // Need category
+  if (!intent.category) {
+    // FIX #2: if store name given, check if it exists
+    if (intent.storeName) {
+      const store = findStoreByName(intent.storeName);
+      if (store) {
+        appendAiMsg(`I found <strong>${escHtml(store.name)}</strong> in our network! ✅ Snap financing is accepted there.`);
+        renderFinancingCard(store.name);
+        return;
+      }
+      appendAiMsg(`I couldn't find <strong>${escHtml(intent.storeName)}</strong> in our partner network.${buildCategoryPromptHtml(" Search for stores in a category instead?")}`);
+      return;
+    }
+    state.awaitingCategory = true;
+    state.pendingIntent = intent;
+    appendAiMsg(`I'd be happy to help! 🛍️ What kind of store are you looking for?<br><br>
+      ${buildCategoryPromptHtml()}`);
+    return;
+  }
+
+  // Need location — FIX #10: try geolocation first
+  if (!intent.location.city && !intent.location.zip) {
+    await requestLocationOrAskZip(intent);
+    return;
+  }
+
+  runSearch(intent);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FOLLOW-UP HANDLER
+════════════════════════════════════════════════════════════ */
+function handleFollowUp(rawQuery) {
+  const intent = parseIntent(rawQuery);
+  const pending = state.pendingIntent || {};
+
+  if (state.awaitingCategory) {
+    state.awaitingCategory = false;
+    const mergedIntent = { ...pending, ...intent, type: "store_search" };
+    if (!mergedIntent.category && intent.category) mergedIntent.category = intent.category;
+    if (!mergedIntent.category) {
+      appendAiMsg(`I didn't quite catch that. Could you specify? E.g.: ${buildCategoryPromptHtml()}`);
+      state.awaitingCategory = true;
+      return;
+    }
+    state.pendingIntent = mergedIntent;
+    if (!mergedIntent.location.city && !mergedIntent.location.zip) {
+      state.awaitingZip = true;
+      const cfg = CAT_CONFIG[mergedIntent.category];
+      appendAiMsg(`${cfg.emoji} <strong>${cfg.label}</strong> — great choice! What's your ZIP code or city?${
+        navigator.geolocation
+          ? `<br><button class="geo-btn" onclick="requestGeoAndSearch()">📍 Use my current location</button>`
+          : ""
+      }`);
+      return;
+    }
+    state.awaitingZip = false;
+    runSearch(mergedIntent);
+    return;
+  }
+
+  if (state.awaitingZip) {
+    state.awaitingZip = false;
+    const locIntent = parseIntent(rawQuery);
+    const mergedIntent = {
+      ...pending,
+      location: (locIntent.location.city || locIntent.location.zip)
+        ? locIntent.location : pending.location,
+    };
+    if (!mergedIntent.location.city && !mergedIntent.location.zip) {
+      const zipMatch = rawQuery.match(/\b\d{5}\b/);
+      if (zipMatch) {
+        mergedIntent.location.zip = zipMatch[0];
+      } else {
+        appendAiMsg(`I didn't catch a location. Please share your <strong>ZIP code</strong> or <strong>city name</strong>.`);
+        state.awaitingZip = true;
+        return;
+      }
+    }
+    runSearch(mergedIntent);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   RUN SEARCH
+════════════════════════════════════════════════════════════ */
+function runSearch(intent) {
+  state.pendingIntent = null;
+  const cfg = intent.category ? CAT_CONFIG[intent.category] : null;
+  const locStr = intent.location.city || (intent.location.zip ? `ZIP ${intent.location.zip}` : "your area");
+
+  // FIX #3: Price context in AI message (honest display, not filtering)
+  let priceNote = "";
+  if (intent.priceFilter) {
+    if (intent.priceFilter.max && intent.priceFilter.min)
+      priceNote = ` 💰 Look for items between <strong>$${intent.priceFilter.min}–$${intent.priceFilter.max}</strong>.`;
+    else if (intent.priceFilter.max)
+      priceNote = ` 💰 Look for items <strong>under $${intent.priceFilter.max}</strong>.`;
+    else if (intent.priceFilter.min)
+      priceNote = ` 💰 Look for items <strong>over $${intent.priceFilter.min}</strong>.`;
+  }
+
+  const stores = searchStores(intent);
+  state.lastShownStores = stores;
+
+  if (stores.length > 0) {
+    appendAiMsg(
+      `Found <strong>${stores.length} ${cfg ? cfg.label : ""} store${stores.length > 1 ? "s" : ""}</strong> near <strong>${locStr}</strong> that accept Snap financing! 🎉${priceNote}`
+    );
+    renderStoreCards(stores, false, intent.priceFilter);
+  } else {
+    const fallback = fallbackSearch(intent);
+    if (fallback.length > 0) {
+      appendAiMsg(
+        `I didn't find ${cfg ? cfg.label.toLowerCase() : "stores"} in <strong>${locStr}</strong>, but here are some <strong>${cfg ? cfg.label.toLowerCase() : ""} stores</strong> that accept Snap financing nearby.${priceNote}`
+      );
+      renderStoreCards(fallback, true, intent.priceFilter);
+    } else {
+      appendAiMsg(`Hmm, I couldn't find any stores matching your search. Try a different city or category, or <a href="https://getsnap.snapfinance.com/lease/en-US/consumer/apply/landing" target="_blank" style="color:var(--green);font-weight:600;">apply for financing</a> and find a partner store after approval.`);
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   HELPER: Category prompt buttons (Fix #2)
+════════════════════════════════════════════════════════════ */
+function buildCategoryPromptHtml(prefix = "") {
+  const btns = Object.entries(CAT_CONFIG).map(([key, cfg]) =>
+    `<button class="cat-prompt-btn" onclick="fillAndSearch('${cfg.label} stores')">${cfg.emoji} ${cfg.label}</button>`
+  ).join("");
+  return `${prefix}<div class="cat-prompt-btns">${btns}</div>`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DROPDOWN — FIX #5: Context-aware AI panel hint
+════════════════════════════════════════════════════════════ */
+let debounceTimer = null;
+
+function getAiPanelHint(q) {
+  // Priority 1: awaiting info
+  if (state.awaitingZip) {
+    const cat = state.pendingIntent?.category;
+    const cfg = cat ? CAT_CONFIG[cat] : null;
+    return `Still looking for ${cfg ? cfg.label : "stores"} — share your ZIP or city to continue.`;
+  }
+  if (state.awaitingCategory) {
+    return `What kind of store? Tires, Furniture, Electronics, Jewelry, Appliances, or Flooring?`;
+  }
+  // Priority 2: has shown stores
+  if (state.lastShownStores.length > 0) {
+    const cat = state.lastShownStores[0]?.category;
+    const cfg = cat ? (CAT_CONFIG[cat] || {}) : {};
+    return `You're browsing ${cfg.label || "stores"} — ask a follow-up, refine by city, or search a new category.`;
+  }
+  // Priority 3: keyword hints
+  for (const h of AI_HINTS) {
+    if (h.trigger.test(q)) return h.hint;
+  }
+  return "Ask me anything — describe what you need and I'll find Snap-approved stores near you.";
+}
+
+function onSearchInput() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const q = document.getElementById("search-input").value.trim();
+    if (q.length < 2) { hideDropdown(); return; }
+    updateDropdown(q);
+    showDropdown();
+  }, 200);
+}
+
+function updateDropdown(q) {
+  const ql = q.toLowerCase();
+  const matched = QUICK_SUGGESTIONS.filter(s =>
+    s.label.includes(ql) || ql.includes(s.label) ||
+    fuzzyMatch(ql.split(" ")[0], [s.label], 2)
+  );
+  const toShow = matched.length > 0 ? matched : QUICK_SUGGESTIONS.slice(0, 4);
+  const sugList = document.getElementById("suggestions-list");
+  sugList.innerHTML = toShow.slice(0, 5).map(s =>
+    `<div class="suggestion-item" onclick="fillAndSearch(${JSON.stringify(s.query)})">
+       <div class="suggestion-icon">${s.emoji}</div>
+       <div class="suggestion-text">${s.emoji} <strong>${s.label}</strong> near you</div>
+     </div>`
+  ).join("") +
+  `<div class="suggestion-item" onclick="fillAndSearch(${JSON.stringify(q)})">
+     <div class="suggestion-icon">🔍</div>
+     <div class="suggestion-text">Search for "<strong>${escHtml(q)}</strong>"</div>
+   </div>`;
+
+  document.getElementById("ai-panel-hint").textContent = getAiPanelHint(q);
+}
+
+function handleAiPanelClick() {
+  const q = document.getElementById("search-input").value.trim();
+  if (q) { hideDropdown(); handleSearch(); }
+}
+
+function showDropdown() { document.getElementById("dropdown").classList.add("open"); }
+function hideDropdown() { document.getElementById("dropdown").classList.remove("open"); }
+
+/* ════════════════════════════════════════════════════════════
+   EVENT LISTENERS
+════════════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("search-input");
+  showWelcome();
+  tryAutoGeolocate(); // FIX #10: silently try location on load
+
+  input.addEventListener("input", onSearchInput);
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); handleSearch(); }
+    if (e.key === "Escape") hideDropdown();
+  });
+  input.addEventListener("focus", () => {
+    if (input.value.trim().length >= 2) showDropdown();
+  });
+  input.addEventListener("blur", () => setTimeout(hideDropdown, 200));
+
+  document.addEventListener("click", e => {
+    if (!document.querySelector(".search-wrapper").contains(e.target)) hideDropdown();
+  });
+});
+</script>
+</body>
+</html>
