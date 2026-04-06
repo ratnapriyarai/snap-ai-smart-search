@@ -1645,6 +1645,13 @@ function updateInputDisplay(text) {
 ════════════════════════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("search-input");
+
+  // Always reset chat bar visibility on load — Chrome sometimes restores
+  // JS-modified DOM from a previous session, which would show the chat bar
+  // even though no search has happened yet.
+  document.getElementById("chat-input-bar").classList.remove("visible");
+  document.body.classList.remove("chat-active");
+
   showWelcome();
   tryAutoGeolocate(); // FIX #10: silently try location on load
 
