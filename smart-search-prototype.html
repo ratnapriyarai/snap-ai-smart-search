@@ -1029,9 +1029,24 @@ function parseIntent(rawQuery) {
       }
       if (bestScore === 0) break;
       // Fuzzy token match
+      // Rules to prevent false positives like "looking" → "flooring":
+      // 1. Skip tokens < 4 chars (prevents "for" → "floor")
+      // 2. For distance-2 matches, require the same first letter
+      //    (prevents "looking"[l] matching "flooring"[f] at d=2)
       for (const token of tokens) {
-        const d = Math.min(...keywords.map(k => levenshtein(token, k)));
-        if (d < bestScore) { bestScore = d; bestCat = cat; }
+        if (token.length < 4) continue;
+        for (const kw of keywords) {
+          const d = levenshtein(token, kw);
+          if (d === 0) {
+            bestScore = 0; bestCat = cat;
+          } else if (d === 1 && d < bestScore) {
+            bestScore = d; bestCat = cat;
+          } else if (d === 2 && d < bestScore && token[0] === kw[0]) {
+            // Only allow distance-2 if first letters match — stops cross-category false positives
+            bestScore = d; bestCat = cat;
+          }
+        }
+        if (bestScore === 0) break;
       }
     }
     if (bestScore <= 2) intent.category = bestCat;
@@ -1136,27 +1151,56 @@ function showChatBar() {
   if (!bar.classList.contains("visible")) {
     bar.classList.add("visible");
     document.body.classList.add("chat-active");
-    // Scroll into conversation — away from hero
-    setTimeout(() => {
-      document.getElementById("chat-thread")
-        .scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    // Do NOT scroll or steal focus here — user just submitted from the hero bar
+    // and should stay in their current view. smartScroll() on the AI response
+    // will bring them to the conversation naturally.
   }
-  // Always re-focus the chat bar input so user can type immediately
-  setTimeout(() => document.getElementById("chat-input")?.focus(), 150);
+  // Do NOT auto-focus the chat input — this steals focus from the hero search bar
+  // and makes users think the page jumped to a different input. User clicks chat bar when ready.
 }
 
-function handleChatBarSearch() {
+async function handleChatBarSearch() {
   const chatInput = document.getElementById("chat-input");
   const val = chatInput.value.trim();
   if (!val) return;
-  // Route through the main search handler by temporarily setting hero input
-  const heroInput = document.getElementById("search-input");
-  heroInput.value = val;
   chatInput.value = "";
-  handleSearch();
+  // Process as conversation follow-up directly — do NOT touch the hero input
+  // or open the hero dropdown. User is in conversation view and expects to stay there.
+  hideDropdown();
+  appendUserMsg(val);
+  if (state.awaitingZip || state.awaitingCategory) {
+    handleFollowUp(val);
+  } else {
+    const intent = parseIntent(val);
+    if (intent.type === "greeting") {
+      showWelcome();
+    } else if (intent.type === "financing") {
+      renderFinancingCard(intent.storeName);
+    } else {
+      // Check for store lookup
+      if (intent.storeName) {
+        const found = MOCK_STORES.find(s => s.name.toLowerCase().includes(intent.storeName.toLowerCase()));
+        if (!found) {
+          appendAiMsg(`I couldn't find <strong>${escHtml(intent.storeName)}</strong> in our network. Would you like me to search for stores near you instead?<br><br>
+            ${Object.entries(CAT_CONFIG).map(([k,v]) => `<button class="cat-btn" onclick="fillAndSearch('${v.label}')">${v.emoji} ${v.label}</button>`).join(" ")}`);
+          return;
+        }
+      }
+      if (!intent.category) {
+        appendAiMsg("What kind of store are you looking for?<br><br>" +
+          Object.entries(CAT_CONFIG).map(([k,v]) => `<button class="cat-btn" onclick="fillAndSearch('${v.label}')">${v.emoji} ${v.label}</button>`).join(" "));
+        state.awaitingCategory = true; state.pendingIntent = intent;
+        return;
+      }
+      if (!intent.location.city && !intent.location.zip) {
+        await requestLocationOrAskZip(intent);
+        return;
+      }
+      runSearch(intent);
+    }
+  }
   // Keep focus on chat bar after sending
-  setTimeout(() => chatInput.focus(), 200);
+  setTimeout(() => chatInput.focus(), 150);
 }
 
 function appendUserMsg(text) {
@@ -1620,11 +1664,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") { e.preventDefault(); handleChatBarSearch(); }
   });
   chatInput.addEventListener("input", () => {
-    // Mirror typing into hero input so dropdown still works
-    const val = chatInput.value;
-    document.getElementById("search-input").value = val;
-    if (val.trim().length >= 2) { updateDropdown(val); showDropdown(); }
-    else hideDropdown();
+    // Chat bar is for conversation follow-ups only — do NOT open the hero dropdown.
+    // Opening the hero dropdown while user is typing in the chat bar causes a jarring
+    // "jump" back to the hero section. The chat bar submits directly via handleChatBarSearch().
+    hideDropdown();
   });
 
   document.addEventListener("click", e => {
