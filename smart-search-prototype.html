@@ -378,6 +378,57 @@
       transition: background .15s;
     }
     .financing-cta:hover { background: var(--green-dark); }
+
+    /* ── Financing Type Selector ───────────────────────────── */
+    .financing-type-grid {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px;
+    }
+    .financing-type-btn {
+      flex: 1; min-width: 130px;
+      background: var(--white); border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md); padding: 14px 12px;
+      cursor: pointer; text-align: left; transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
+    }
+    .financing-type-btn:hover {
+      border-color: var(--green); box-shadow: 0 0 0 3px var(--green-light);
+    }
+    .financing-type-btn .ft-icon { font-size: 26px; display: block; margin-bottom: 6px; }
+    .financing-type-btn .ft-title { font-size: 14px; font-weight: 700; color: var(--dark); display: block; }
+    .financing-type-btn .ft-sub   { font-size: 12px; color: var(--dark-60); display: block; margin-top: 2px; line-height: 1.4; }
+
+    /* ── Financing Detail Card ─────────────────────────────── */
+    .financing-detail-card {
+      background: var(--white); border: 2px solid var(--green);
+      border-radius: var(--radius-md); padding: 20px 24px;
+      box-shadow: var(--shadow-sm); animation: fadeSlideIn .3s ease; max-width: 520px;
+    }
+    .financing-detail-card .fdc-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+    }
+    .financing-detail-card .fdc-icon {
+      width: 44px; height: 44px; background: var(--green-light);
+      border-radius: var(--radius-sm); display: flex; align-items: center;
+      justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .financing-detail-card .fdc-title { font-size: 17px; font-weight: 700; }
+    .financing-detail-card .fdc-badge {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 10px; background: var(--green-light); color: var(--green);
+      margin-left: 6px;
+    }
+    .financing-detail-card .fdc-desc {
+      font-size: 13px; color: var(--dark-60); line-height: 1.65; margin-bottom: 14px;
+    }
+    .fdc-features {
+      list-style: none; margin-bottom: 16px;
+    }
+    .fdc-features li {
+      font-size: 13px; color: var(--dark); padding: 4px 0;
+      display: flex; align-items: flex-start; gap: 7px;
+    }
+    .fdc-features li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
     /* card row in chat */
     .msg-row-card {
       display: flex; gap: 10px; align-items: flex-start;
@@ -1119,7 +1170,61 @@ const state = {
   pendingIntent: null,
   awaitingZip: false,
   awaitingCategory: false,
+  awaitingFinancingType: false,
+  pendingFinancingStore: null,
   lastShownStores: [],
+};
+
+/* Financing product definitions */
+const FINANCING_TYPES = {
+  lto: {
+    key: "lto",
+    icon: "🔄",
+    title: "Lease-to-Own (LTO)",
+    badge: "Most Popular",
+    desc: "Snap's flagship product. Get the items you need today and pay over time with flexible lease payments. No traditional credit check required — approval in minutes.",
+    features: [
+      "No credit needed — alternative approval process",
+      "Flexible payment schedule (weekly, bi-weekly, monthly)",
+      "Early purchase options to save money",
+      "Shop at thousands of Snap partner stores",
+    ],
+    cta: "Start LTO Application →",
+    url: "https://getsnap.snapfinance.com/lease/en-US/consumer/apply/landing",
+    keywords: ["lto","lease","lease to own","lease-to-own","leasing","rent to own","flexible"],
+  },
+  ric: {
+    key: "ric",
+    icon: "📋",
+    title: "Retail Installment Contract (RIC)",
+    badge: "Fixed Payments",
+    desc: "A traditional retail installment plan with fixed monthly payments and a clear payoff date. Great if you prefer predictable, structured payments.",
+    features: [
+      "Fixed monthly payment amount — no surprises",
+      "Defined loan term with a clear payoff date",
+      "Competitive interest rates",
+      "Available at select Snap partner retailers",
+    ],
+    cta: "Explore RIC Options →",
+    url: "https://www.snapfinance.com/find-stores",
+    keywords: ["ric","retail installment","installment contract","installment","fixed payment","fixed term"],
+  },
+  loan: {
+    key: "loan",
+    icon: "💵",
+    title: "Personal Loan",
+    badge: "Lump Sum",
+    desc: "Need a lump sum up front? A personal loan gives you cash deposited directly to your account. Use it for any purchase at any store — not limited to Snap partners.",
+    features: [
+      "Funds deposited directly to your bank account",
+      "Use at any store — not restricted to partners",
+      "Fixed interest rate for the loan term",
+      "Multiple term lengths available",
+    ],
+    cta: "Check Loan Options →",
+    url: "https://www.snapfinance.com/find-stores",
+    keywords: ["loan","personal loan","cash","lump sum","borrow","direct deposit"],
+  },
 };
 
 /* FIX #9: Track if user has scrolled into chat area */
@@ -1168,14 +1273,15 @@ async function handleChatBarSearch() {
   // or open the hero dropdown. User is in conversation view and expects to stay there.
   hideDropdown();
   appendUserMsg(val);
-  if (state.awaitingZip || state.awaitingCategory) {
+  if (state.awaitingZip || state.awaitingCategory || state.awaitingFinancingType) {
     handleFollowUp(val);
   } else {
     const intent = parseIntent(val);
     if (intent.type === "greeting") {
       showWelcome();
     } else if (intent.type === "financing") {
-      renderFinancingCard(intent.storeName);
+      appendAiMsg(`Snap Finance offers several financing options — which type are you looking for?`);
+      renderFinancingCard(intent.storeName || null);
     } else {
       // Check for store lookup
       if (intent.storeName) {
@@ -1290,22 +1396,35 @@ function renderStoreCards(stores, isFallback = false, priceFilter = null) {
   }, 700);
 }
 
-/* FIX #7: Financing card appended to chat thread, not replacing results */
+/* Show financing type selector — asks user LTO / RIC / Loan */
 function renderFinancingCard(storeName = null) {
+  // Instead of showing a generic card, ask what type of financing they need
+  state.awaitingFinancingType = true;
+  state.pendingFinancingStore = storeName || null;
+
   const storeNote = storeName
-    ? `<p style="font-size:13px;color:var(--blue);margin-bottom:10px;">📌 Store queried: <strong>${escHtml(storeName)}</strong></p>`
+    ? `<br><span style="font-size:13px;color:var(--blue);">📌 For: <strong>${escHtml(storeName)}</strong></span>`
     : "";
+
+  const typeButtons = Object.values(FINANCING_TYPES).map(ft => `
+    <button class="financing-type-btn" onclick="handleFinancingTypeSelection('${ft.key}')">
+      <span class="ft-icon">${ft.icon}</span>
+      <span class="ft-title">${ft.title}</span>
+      <span class="ft-sub">${ft.badge}</span>
+    </button>`).join("");
+
   const cardHtml = `
-    <div class="financing-card">
-      <div class="financing-icon">💳</div>
-      <div class="financing-body">
-        <h3>Snap Financing Available</h3>
-        ${storeNote}
-        <p>Snap Finance offers flexible lease-to-own options with no credit needed. Get approved in minutes and shop at thousands of partner stores.</p>
-        <a class="financing-cta" href="https://getsnap.snapfinance.com/lease/en-US/consumer/apply/landing" target="_blank">
-          Apply Now — It's Quick & Easy →
-        </a>
+    <div class="financing-card" style="flex-direction:column;max-width:560px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+        <div class="financing-icon">💳</div>
+        <div>
+          <div class="financing-body" style="margin:0;">
+            <h3 style="margin-bottom:2px;">What type of financing do you need?${storeNote}</h3>
+            <p style="margin:0;">Snap Finance offers multiple options — pick the one that fits you best.</p>
+          </div>
+        </div>
       </div>
+      <div class="financing-type-grid">${typeButtons}</div>
     </div>`;
 
   setTimeout(() => {
@@ -1314,14 +1433,67 @@ function renderFinancingCard(storeName = null) {
     row.className = "msg-row-card";
     row.innerHTML = `<div class="msg-avatar ai" style="align-self:flex-start;margin-top:4px;">S</div><div style="flex:1">${cardHtml}</div>`;
     thread.appendChild(row);
-    // FIX #9: gentle scroll
     if (userInChat) {
       row.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } else {
       row.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-    state.messages.push({ role: "ai", text: "[financing card]" });
+    state.messages.push({ role: "ai", text: "[financing type selector]" });
   }, 700);
+}
+
+/* Render detailed card for a specific financing type */
+function renderFinancingDetailCard(typeKey, storeName = null) {
+  const ft = FINANCING_TYPES[typeKey];
+  if (!ft) return;
+
+  state.awaitingFinancingType = false;
+  state.pendingFinancingStore = null;
+
+  const storeNote = storeName
+    ? `<p style="font-size:12px;color:var(--blue);margin-bottom:10px;">📌 For store: <strong>${escHtml(storeName)}</strong></p>`
+    : "";
+
+  const featureList = ft.features.map(f => `<li>${escHtml(f)}</li>`).join("");
+
+  const cardHtml = `
+    <div class="financing-detail-card">
+      <div class="fdc-header">
+        <div class="fdc-icon">${ft.icon}</div>
+        <div>
+          <span class="fdc-title">${ft.title}</span>
+          <span class="fdc-badge">${ft.badge}</span>
+        </div>
+      </div>
+      ${storeNote}
+      <p class="fdc-desc">${ft.desc}</p>
+      <ul class="fdc-features">${featureList}</ul>
+      <a class="financing-cta" href="${ft.url}" target="_blank">${ft.cta}</a>
+    </div>`;
+
+  setTimeout(() => {
+    const thread = document.getElementById("chat-thread");
+    const row = document.createElement("div");
+    row.className = "msg-row-card";
+    row.innerHTML = `<div class="msg-avatar ai" style="align-self:flex-start;margin-top:4px;">S</div><div style="flex:1">${cardHtml}</div>`;
+    thread.appendChild(row);
+    if (userInChat) {
+      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      row.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    state.messages.push({ role: "ai", text: `[financing detail: ${typeKey}]` });
+  }, 400);
+}
+
+/* Called when user clicks one of the three financing type buttons */
+function handleFinancingTypeSelection(typeKey) {
+  const ft = FINANCING_TYPES[typeKey];
+  if (!ft) return;
+  const storeName = state.pendingFinancingStore;
+  appendUserMsg(ft.title);
+  appendAiMsg(`Great choice! Here's everything you need to know about <strong>${ft.title}</strong> through Snap Finance.`);
+  renderFinancingDetailCard(typeKey, storeName);
 }
 
 function showWelcome() {
@@ -1371,8 +1543,8 @@ async function handleSearch() {
   input.value = "";
   // Don't blur — let focus naturally move to chat bar
 
-  // Follow-up if awaiting info
-  if (state.awaitingZip || state.awaitingCategory) {
+  // Follow-up if awaiting info (including financing type selection)
+  if (state.awaitingZip || state.awaitingCategory || state.awaitingFinancingType) {
     handleFollowUp(rawQuery);
     return;
   }
@@ -1390,20 +1562,20 @@ async function handleSearch() {
     return;
   }
 
-  // Financing intent
+  // Financing intent — first ask what type of financing they need
   if (intent.type === "financing") {
     const store = intent.storeName ? findStoreByName(intent.storeName) : null;
-    let aiText = `Great question! Snap Finance offers flexible lease-to-own options — no credit needed.`;
-    if (intent.storeName && store) {
-      aiText += ` I found <strong>${escHtml(store.name)}</strong> in our partner network — Snap financing is accepted there! ✅`;
-    } else if (intent.storeName) {
-      aiText += ` I couldn't find <strong>${escHtml(intent.storeName)}</strong> in our current network.`;
-      aiText += buildCategoryPromptHtml(" Want to search for a similar store?");
-    } else {
-      aiText += ` Click below to start your application — takes just a few minutes.`;
+    const storeName = store ? store.name : (intent.storeName || null);
+
+    let aiText = `Snap Finance offers several financing options — let me help you find the right one.`;
+    if (storeName && store) {
+      aiText += ` I found <strong>${escHtml(store.name)}</strong> in our partner network ✅.`;
+    } else if (storeName) {
+      aiText += ` I couldn't find <strong>${escHtml(storeName)}</strong> in our current network, but you can still explore financing options.`;
     }
+    aiText += ` Which type of financing are you looking for?`;
     appendAiMsg(aiText);
-    renderFinancingCard(store ? store.name : (intent.storeName || null));
+    renderFinancingCard(storeName);
     return;
   }
 
@@ -1443,14 +1615,31 @@ function handleFollowUp(rawQuery) {
   const intent = parseIntent(rawQuery);
   const pending = state.pendingIntent || {};
 
+  // If user is responding to the financing type selector, match their typed answer
+  if (state.awaitingFinancingType) {
+    const ql = rawQuery.toLowerCase().trim();
+    let matched = null;
+    for (const ft of Object.values(FINANCING_TYPES)) {
+      if (ft.keywords.some(kw => ql.includes(kw))) { matched = ft.key; break; }
+    }
+    if (matched) {
+      const storeName = state.pendingFinancingStore;
+      appendAiMsg(`Great choice! Here's everything you need to know about <strong>${FINANCING_TYPES[matched].title}</strong> through Snap Finance.`);
+      renderFinancingDetailCard(matched, storeName);
+      return;
+    }
+    // Couldn't match — re-prompt
+    appendAiMsg(`I didn't catch that. Please choose one: <strong>LTO</strong> (Lease-to-Own), <strong>RIC</strong> (Retail Installment), or <strong>Loan</strong>.`);
+    return;
+  }
+
   // If user pivots to a completely different intent (financing, greeting),
   // reset awaiting state and handle it directly — no location needed for financing.
   if (intent.type === "financing") {
     state.awaitingZip = false;
     state.awaitingCategory = false;
     state.pendingIntent = null;
-    const aiText = `Great question! Snap Finance offers flexible lease-to-own options — no credit needed. Click below to start your lease application — it only takes a few minutes.`;
-    appendAiMsg(aiText);
+    appendAiMsg(`Sure! Snap Finance offers multiple financing options. Which type works best for you?`);
     renderFinancingCard(null);
     return;
   }
