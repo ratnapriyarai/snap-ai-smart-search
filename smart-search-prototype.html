@@ -515,20 +515,6 @@
     .category-view.open { display: block; animation: fadeSlideIn .2s ease; }
     .cv-inner { max-width: 1200px; margin: 0 auto; padding: 20px 24px 48px; }
 
-    .cv-breadcrumb { font-size: 12px; color: var(--dark-60); margin-bottom: 14px; }
-    .cv-breadcrumb .crumb { cursor: pointer; }
-    .cv-breadcrumb .crumb:hover { color: var(--green); text-decoration: underline; }
-    .cv-breadcrumb .crumb.current { color: var(--dark); font-weight: 600; cursor: default; }
-    .cv-breadcrumb .crumb.current:hover { text-decoration: none; }
-    .cv-breadcrumb .sep { margin: 0 6px; color: var(--gray-200); }
-
-    .cv-header {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
-    }
-    .cv-title-row { display: flex; align-items: center; gap: 10px; }
-    .cv-title-row .cv-emoji { font-size: 28px; }
-    .cv-title-row h2 { font-size: 23px; font-weight: 700; color: var(--dark); }
     /* Location has no dedicated UI area — it's just text in the results line
        ("near Austin" / a hint to add one), same as the rest of the query. */
     .cv-loc-hint { color: var(--dark-60); font-weight: 400; }
@@ -717,15 +703,6 @@
      category on first load. -->
 <section class="category-view" id="category-view">
   <div class="cv-inner">
-    <nav class="cv-breadcrumb" id="cv-breadcrumb"></nav>
-
-    <div class="cv-header">
-      <div class="cv-title-row">
-        <span class="cv-emoji" id="cv-emoji"></span>
-        <h2 id="cv-title"></h2>
-      </div>
-    </div>
-
     <div class="cv-mode-toggle">
       <button class="cv-mode-btn" id="cv-mode-instore" onclick="setViewMode('in-store')">🏬 In-Store</button>
       <button class="cv-mode-btn" id="cv-mode-online" onclick="setViewMode('online')">💳 Online</button>
@@ -1797,12 +1774,6 @@ function openCategoryView(catKey, filters = {}, opts = {}) {
   if (!opts.skipScroll) section.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// "Find a Store" breadcrumb click — resets back to the default category/filters,
-// same idea as clicking a site logo to return home.
-function resetCategoryView() {
-  openCategoryView(DEFAULT_CATEGORY);
-}
-
 function setSort(value) {
   state.categoryView.sort = value;
   renderCategoryView();
@@ -1815,8 +1786,8 @@ function setViewMode(mode) {
 // Financing product names (LTO/RIC/Loan) are internal jargon — shoppers
 // don't parse them and don't need to. The card just says financing is
 // available; which product applies is a checkout-time detail, not a filter.
-// No category badge here — the page title/breadcrumb above already say
-// it once, and every card in this grid is the same category anyway.
+// No category badge here — the active pill above already shows it, and
+// every card in this grid is the same category anyway.
 function renderCategoryStoreCard(s) {
   const stars = "★".repeat(Math.floor(s.rating)) + (s.rating % 1 >= 0.5 ? "★" : "");
   return `
@@ -1840,17 +1811,9 @@ function renderCategoryView() {
   const loc = state.currentLocation;
   updateGeoButtonState();
 
-  // ── Breadcrumb — flat: Find a Store / {Category}, no subcategory level.
-  // Snap's real taxonomy has no drill-down; a brand narrows Marketplace only. ──
-  document.getElementById("cv-breadcrumb").innerHTML = `
-    <span class="crumb" onclick="resetCategoryView()">Find a Store</span>
-    <span class="sep">/</span>
-    <span class="crumb current">${escHtml(cfg.label)}</span>
-    ${brand ? `<span class="sep">/</span><span class="crumb current">${escHtml(brand)}</span>` : ""}`;
-
-  // ── Header — just the category, no restated description ──
-  document.getElementById("cv-emoji").textContent = cfg.emoji;
-  document.getElementById("cv-title").textContent = brand ? `${brand} — ${cfg.label}` : cfg.label;
+  // No breadcrumb/title here — the active category pill below is the only
+  // place the category name needs to show; a brand match already gets its
+  // own callout in the Marketplace section heading.
 
   // Location has no dedicated UI area — it's just part of the same sentence
   // typed into the one search bar above (parseIntent already pulls a city/
