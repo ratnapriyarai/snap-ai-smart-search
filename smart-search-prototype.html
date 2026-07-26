@@ -332,14 +332,23 @@
     }
     .store-cta {
       margin-top: auto; padding-top: 8px; border-top: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: 14px;
     }
-    .store-cta a {
-      display: inline-block; padding: 8px 18px;
+    /* Shared primary/secondary CTA pair — same pattern on store cards and
+       Marketplace cards: one clear next step (Apply Now), one quiet way to
+       learn more first (Details) for anyone not ready to commit yet. */
+    .cta-primary {
+      flex: 1; text-align: center; display: inline-block; padding: 8px 18px;
       border: 1.5px solid var(--green); border-radius: 20px;
       color: var(--green); font-size: 13px; font-weight: 600;
       transition: background .15s, color .15s;
     }
-    .store-cta a:hover { background: var(--green); color: white; }
+    .cta-primary:hover { background: var(--green); color: white; }
+    .cta-secondary {
+      font-size: 12.5px; font-weight: 600; color: var(--dark-60);
+      text-decoration: underline; text-underline-offset: 2px; white-space: nowrap;
+    }
+    .cta-secondary:hover { color: var(--green); }
 
     /* ── Financing Card — Fix #7: inline in chat thread ───── */
     .financing-card {
@@ -578,12 +587,7 @@
     .mp-price, .mp-price-sale { font-size: 17px; font-weight: 700; color: var(--dark); }
     .mp-price-was { font-size: 13px; color: var(--dark-60); text-decoration: line-through; }
     .mp-wk { font-size: 12px; color: var(--green); font-weight: 600; }
-    .mp-cta {
-      margin-top: 8px; text-align: center; padding: 8px 0; border-radius: 20px;
-      border: 1.5px solid var(--green); color: var(--green); font-size: 13px; font-weight: 600;
-      transition: background .15s, color .15s;
-    }
-    .mp-cta:hover { background: var(--green); color: white; }
+    .mp-cta-row { margin-top: 8px; display: flex; align-items: center; gap: 12px; }
     .cv-mp-empty { font-size: 13px; color: var(--dark-60); }
 
     /* ── Responsive ───────────────────────────────────────── */
@@ -1801,7 +1805,10 @@ function renderCategoryStoreCard(s) {
         <span class="rating-count">(${s.reviews} reviews)</span>
       </div>
       <span class="snap-badge">✓ Financing Accepted</span>
-      <div class="store-cta"><a href="#">View Store →</a></div>
+      <div class="store-cta">
+        <a class="cta-primary" href="#">Apply Now →</a>
+        <a class="cta-secondary" href="#">Details</a>
+      </div>
     </div>`;
 }
 
@@ -1922,7 +1929,10 @@ function renderMarketplaceCard(p) {
       <div class="mp-name">${escHtml(p.name)}</div>
       <div class="mp-price-row">${priceHtml}</div>
       <div class="mp-wk">Or as low as <strong>$${p.weeklyPrice.toFixed(2)}/wk</strong></div>
-      <a class="mp-cta" href="https://shop.snapfinance.com" target="_blank" rel="noopener">Shop Now →</a>
+      <div class="mp-cta-row">
+        <a class="cta-primary" href="https://shop.snapfinance.com" target="_blank" rel="noopener">Apply Now →</a>
+        <a class="cta-secondary" href="https://shop.snapfinance.com" target="_blank" rel="noopener">Details</a>
+      </div>
     </div>`;
 }
 
