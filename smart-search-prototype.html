@@ -518,6 +518,128 @@
       to   { transform: translateY(0);    opacity: 1; }
     }
 
+    /* ── Category Browse View (Klarna-style fast path) ──────
+       Reached by clicking a taxonomy row in the search dropdown.
+       Sits between the hero and the AI chat thread; hidden by default. */
+    .category-view {
+      display: none; background: var(--white); border-bottom: 1px solid var(--gray-200);
+      /* header is position:sticky with z-index:100 — without this, scrollIntoView()
+         lands this section flush with the viewport top and the header paints over
+         the back button/breadcrumb instead of sitting above them. */
+      scroll-margin-top: 80px;
+    }
+    .category-view.open { display: block; animation: fadeSlideIn .2s ease; }
+    .cv-inner { max-width: 1200px; margin: 0 auto; padding: 20px 24px 48px; }
+
+    .cv-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: var(--dark-60);
+      background: none; border: none; font-family: inherit; cursor: pointer;
+      padding: 6px 0; margin-bottom: 6px;
+    }
+    .cv-back:hover { color: var(--green); }
+
+    .cv-breadcrumb { font-size: 12px; color: var(--dark-60); margin-bottom: 14px; }
+    .cv-breadcrumb .crumb { cursor: pointer; }
+    .cv-breadcrumb .crumb:hover { color: var(--green); text-decoration: underline; }
+    .cv-breadcrumb .crumb.current { color: var(--dark); font-weight: 600; cursor: default; }
+    .cv-breadcrumb .crumb.current:hover { text-decoration: none; }
+    .cv-breadcrumb .sep { margin: 0 6px; color: var(--gray-200); }
+
+    .cv-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .cv-title-row { display: flex; align-items: center; gap: 10px; }
+    .cv-title-row .cv-emoji { font-size: 28px; }
+    .cv-title-row h2 { font-size: 23px; font-weight: 700; color: var(--dark); }
+    .cv-desc { font-size: 14px; color: var(--dark-60); margin-top: 4px; max-width: 60ch; line-height: 1.5; }
+    .cv-ai-link {
+      font-size: 13px; font-weight: 600; color: var(--green); cursor: pointer;
+      white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
+      background: var(--green-light); padding: 8px 14px; border-radius: 20px;
+    }
+    .cv-ai-link:hover { background: #ddf0e5; }
+
+    .cv-locrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13px; }
+    .cv-loc-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--green-light); color: var(--green-dark); font-weight: 700;
+      padding: 6px 12px; border-radius: 20px;
+    }
+    .cv-loc-change { color: var(--blue); font-weight: 600; cursor: pointer; }
+    .cv-loc-change:hover { text-decoration: underline; }
+
+    .cv-loc-prompt {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--amber-light); border: 1px solid var(--amber);
+      border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: #92400e;
+    }
+    .cv-loc-prompt input {
+      border: 1px solid var(--gray-200); border-radius: 20px; padding: 7px 14px;
+      font-size: 13px; font-family: inherit; outline: none; min-width: 170px; background: white;
+    }
+    .cv-loc-prompt input:focus { border-color: var(--green); }
+    .cv-loc-prompt button {
+      background: var(--green); color: white; border: none; border-radius: 20px;
+      padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .cv-loc-prompt button:hover { background: var(--green-dark); }
+    .cv-loc-prompt button.cv-geo-btn { background: white; color: var(--green); border: 1.5px solid var(--green); }
+    .cv-loc-prompt button.cv-geo-btn:hover { background: var(--green-light); }
+
+    .cv-mode-toggle { display: inline-flex; background: var(--gray-100); border-radius: 20px; padding: 3px; margin-bottom: 20px; }
+    .cv-mode-btn {
+      border: none; background: none; padding: 8px 18px; border-radius: 16px;
+      font-size: 13px; font-weight: 600; color: var(--dark-60); cursor: pointer;
+      font-family: inherit; display: flex; align-items: center; gap: 6px; transition: background .15s, color .15s;
+    }
+    .cv-mode-btn.active { background: white; color: var(--dark); box-shadow: var(--shadow-sm); }
+
+    .cv-pills { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; margin-bottom: 22px; }
+    .cv-pill {
+      flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 10px 16px; border-radius: var(--radius-md); border: 1.5px solid var(--gray-200);
+      background: white; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--dark);
+      min-width: 78px; transition: border-color .15s, background .15s;
+    }
+    .cv-pill .cv-pill-emoji { font-size: 20px; }
+    .cv-pill:hover { border-color: var(--green); }
+    .cv-pill.active { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+
+    .cv-body { display: grid; grid-template-columns: 216px 1fr; gap: 28px; align-items: start; }
+    .cv-sidebar { display: flex; flex-direction: column; gap: 22px; position: sticky; top: 84px; }
+    .cv-filter-group h4 {
+      font-size: 11.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--dark-60); margin-bottom: 8px;
+    }
+    .cv-filter-list { display: flex; flex-direction: column; gap: 1px; }
+    .cv-filter-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 7px 9px; border-radius: 6px; font-size: 13px; color: var(--dark);
+      cursor: pointer; background: none; border: none; font-family: inherit; text-align: left; width: 100%;
+    }
+    .cv-filter-item:hover { background: var(--gray-100); }
+    .cv-filter-item.active { background: var(--green-light); color: var(--green-dark); font-weight: 700; }
+    .cv-filter-count { font-size: 11px; color: var(--dark-60); }
+    .cv-filter-item.active .cv-filter-count { color: var(--green-dark); }
+
+    .cv-results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .cv-results-count { font-size: 14px; color: var(--dark-60); }
+    .cv-results-count strong { color: var(--dark); }
+    .cv-sort-select {
+      border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 7px 16px 7px 14px;
+      font-size: 13px; font-family: inherit; color: var(--dark); background: white; cursor: pointer; outline: none;
+    }
+    .cv-sort-select:focus { border-color: var(--green); }
+
+    .service-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .service-tag { font-size: 10.5px; font-weight: 600; color: var(--dark-60); background: var(--gray-100); padding: 3px 9px; border-radius: 10px; }
+
+    .cv-empty { text-align: center; padding: 56px 24px; color: var(--dark-60); }
+    .cv-empty .cv-empty-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+    .cv-empty p { max-width: 42ch; margin: 0 auto; line-height: 1.5; }
+
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 768px) {
       .hero { padding: 40px 16px 56px; }
@@ -537,6 +659,12 @@
       }
       #dropdown.open { display: flex !important; flex-direction: column; }
       .dropdown-mobile-header { display: flex; }
+
+      /* Category view: sidebar collapses above the grid, pills row scrolls */
+      .cv-body { grid-template-columns: 1fr; }
+      .cv-sidebar { position: static; flex-direction: row; flex-wrap: wrap; gap: 20px; }
+      .cv-header { flex-direction: column; align-items: stretch; }
+      .cv-ai-link { align-self: flex-start; }
     }
     @media (min-width: 769px) {
       .dropdown-mobile-header { display: none !important; }
@@ -622,6 +750,60 @@
   </div>
 </section>
 
+<!-- ── Category Browse View (Klarna-style fast path) ────────
+     Reached by clicking a category/subcategory row in the search
+     dropdown. Free-text queries still go to the FlexAI chat below. -->
+<section class="category-view" id="category-view">
+  <div class="cv-inner">
+    <button class="cv-back" onclick="closeCategoryView()">← Back to search</button>
+    <nav class="cv-breadcrumb" id="cv-breadcrumb"></nav>
+
+    <div class="cv-header">
+      <div>
+        <div class="cv-title-row">
+          <span class="cv-emoji" id="cv-emoji"></span>
+          <h2 id="cv-title"></h2>
+        </div>
+        <p class="cv-desc" id="cv-desc"></p>
+      </div>
+      <span class="cv-ai-link" onclick="switchToAiSearch()">✦ Can't find it? Ask FlexAI</span>
+    </div>
+
+    <div id="cv-locrow"></div>
+
+    <div class="cv-mode-toggle">
+      <button class="cv-mode-btn" id="cv-mode-instore" onclick="setViewMode('in-store')">🏬 In-Store</button>
+      <button class="cv-mode-btn" id="cv-mode-online" onclick="setViewMode('online')">💳 Online</button>
+    </div>
+
+    <div class="cv-pills" id="cv-pills"></div>
+
+    <div class="cv-body">
+      <aside class="cv-sidebar">
+        <div class="cv-filter-group">
+          <h4>Refine by service</h4>
+          <div class="cv-filter-list" id="cv-filter-services"></div>
+        </div>
+        <div class="cv-filter-group">
+          <h4>Rating</h4>
+          <div class="cv-filter-list" id="cv-filter-rating"></div>
+        </div>
+      </aside>
+      <div>
+        <div class="cv-results-bar">
+          <div class="cv-results-count" id="cv-results-count"></div>
+          <select class="cv-sort-select" id="cv-sort-select" onchange="setSort(this.value)">
+            <option value="best">Sort: Best Match</option>
+            <option value="rating">Sort: Highest Rated</option>
+            <option value="reviews">Sort: Most Reviewed</option>
+          </select>
+        </div>
+        <div id="cv-results"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── Main Content ───────────────────────────────────────── -->
 <main>
   <div id="chat-thread"></div>
@@ -677,6 +859,7 @@ async function reverseGeocode(lat, lon) {
     geoState.city = data.address?.city || data.address?.town || data.address?.village || null;
     geoState.zip  = data.address?.postcode || null;
     geoState.fetched = true;
+    setCurrentLocation(geoState.city, geoState.zip);
   } catch(e) { /* fail silently */ }
 }
 
@@ -754,41 +937,41 @@ function requestGeoAndSearch() {
 ════════════════════════════════════════════════════════════ */
 const MOCK_STORES = [
   // ── Tires ──────────────────────────────────────────────
-  { id:1,  name:"QuickFit Tire Center",       category:"tires",       city:"San Jose",     state:"CA", zip:"95101", address:"1240 Blossom Hill Rd",      phone:"(408) 555-0191", rating:4.3, reviews:187, snap:true },
-  { id:2,  name:"Precision Auto & Tires",     category:"tires",       city:"Austin",       state:"TX", zip:"78701", address:"312 E 6th St",               phone:"(512) 555-0342", rating:4.6, reviews:224, snap:true },
-  { id:3,  name:"Desert Wheel Works",         category:"tires",       city:"Phoenix",      state:"AZ", zip:"85001", address:"900 N Central Ave",          phone:"(602) 555-0187", rating:4.1, reviews:143, snap:true },
-  { id:4,  name:"Bay Area Tire Pros",         category:"tires",       city:"San Francisco",state:"CA", zip:"94102", address:"555 Market St",              phone:"(415) 555-0223", rating:4.4, reviews:198, snap:true },
-  { id:5,  name:"Lone Star Tire & Rim",       category:"tires",       city:"Houston",      state:"TX", zip:"77001", address:"2100 Main St",               phone:"(713) 555-0411", rating:4.2, reviews:156, snap:true },
-  { id:21, name:"LA Wheels & Tires",          category:"tires",       city:"Los Angeles",  state:"CA", zip:"90001", address:"400 S Figueroa St",          phone:"(213) 555-2101", rating:4.5, reviews:312, snap:true },
-  { id:22, name:"Queen City Auto Care",       category:"tires",       city:"Charlotte",    state:"NC", zip:"28201", address:"100 N Tryon St",             phone:"(704) 555-2201", rating:4.3, reviews:167, snap:true },
+  { id:1,  name:"QuickFit Tire Center",       category:"tires",       city:"San Jose",     state:"CA", zip:"95101", address:"1240 Blossom Hill Rd",      phone:"(408) 555-0191", rating:4.3, reviews:187, snap:true, services:["tires","wheels_rims","alignment"] },
+  { id:2,  name:"Precision Auto & Tires",     category:"tires",       city:"Austin",       state:"TX", zip:"78701", address:"312 E 6th St",               phone:"(512) 555-0342", rating:4.6, reviews:224, snap:true, services:["tires","auto_repair","brakes","alignment"] },
+  { id:3,  name:"Desert Wheel Works",         category:"tires",       city:"Phoenix",      state:"AZ", zip:"85001", address:"900 N Central Ave",          phone:"(602) 555-0187", rating:4.1, reviews:143, snap:true, services:["tires","wheels_rims"] },
+  { id:4,  name:"Bay Area Tire Pros",         category:"tires",       city:"San Francisco",state:"CA", zip:"94102", address:"555 Market St",              phone:"(415) 555-0223", rating:4.4, reviews:198, snap:true, services:["tires","wheels_rims","oil_change"] },
+  { id:5,  name:"Lone Star Tire & Rim",       category:"tires",       city:"Houston",      state:"TX", zip:"77001", address:"2100 Main St",               phone:"(713) 555-0411", rating:4.2, reviews:156, snap:true, services:["tires","wheels_rims","brakes"] },
+  { id:21, name:"LA Wheels & Tires",          category:"tires",       city:"Los Angeles",  state:"CA", zip:"90001", address:"400 S Figueroa St",          phone:"(213) 555-2101", rating:4.5, reviews:312, snap:true, services:["tires","wheels_rims","alignment","oil_change"] },
+  { id:22, name:"Queen City Auto Care",       category:"tires",       city:"Charlotte",    state:"NC", zip:"28201", address:"100 N Tryon St",             phone:"(704) 555-2201", rating:4.3, reviews:167, snap:true, services:["tires","auto_repair","oil_change","brakes"] },
   // ── Furniture ──────────────────────────────────────────
-  { id:6,  name:"ComfortCasa Furniture",      category:"furniture",   city:"San Jose",     state:"CA", zip:"95112", address:"450 N 1st St",               phone:"(408) 555-0612", rating:4.5, reviews:302, snap:true },
-  { id:7,  name:"Lone Star Home Furnishings", category:"furniture",   city:"Dallas",       state:"TX", zip:"75201", address:"1800 Commerce St",           phone:"(214) 555-0733", rating:4.3, reviews:178, snap:true },
-  { id:8,  name:"Vegas Living Room",          category:"furniture",   city:"Las Vegas",    state:"NV", zip:"89101", address:"300 Fremont St",             phone:"(702) 555-0821", rating:4.0, reviews:134, snap:true },
-  { id:9,  name:"Chicago Home Co.",           category:"furniture",   city:"Chicago",      state:"IL", zip:"60601", address:"22 W Adams St",              phone:"(312) 555-0912", rating:4.4, reviews:261, snap:true },
-  { id:10, name:"Atlanta Furniture Gallery",  category:"furniture",   city:"Atlanta",      state:"GA", zip:"30301", address:"180 Peachtree St NE",        phone:"(404) 555-1022", rating:4.2, reviews:189, snap:true },
-  { id:23, name:"Manhattan Home Furnishings", category:"furniture",   city:"New York",     state:"NY", zip:"10001", address:"350 W 34th St",              phone:"(212) 555-2301", rating:4.6, reviews:408, snap:true },
-  { id:24, name:"LA Living Furniture",        category:"furniture",   city:"Los Angeles",  state:"CA", zip:"90012", address:"800 S Broadway",             phone:"(213) 555-2401", rating:4.3, reviews:227, snap:true },
-  { id:25, name:"Queen City Furniture",       category:"furniture",   city:"Charlotte",    state:"NC", zip:"28202", address:"200 S College St",           phone:"(704) 555-2501", rating:4.1, reviews:143, snap:true },
+  { id:6,  name:"ComfortCasa Furniture",      category:"furniture",   city:"San Jose",     state:"CA", zip:"95112", address:"450 N 1st St",               phone:"(408) 555-0612", rating:4.5, reviews:302, snap:true, services:["sofas","beds_mattresses","dining"] },
+  { id:7,  name:"Lone Star Home Furnishings", category:"furniture",   city:"Dallas",       state:"TX", zip:"75201", address:"1800 Commerce St",           phone:"(214) 555-0733", rating:4.3, reviews:178, snap:true, services:["sofas","bedroom_sets","recliners"] },
+  { id:8,  name:"Vegas Living Room",          category:"furniture",   city:"Las Vegas",    state:"NV", zip:"89101", address:"300 Fremont St",             phone:"(702) 555-0821", rating:4.0, reviews:134, snap:true, services:["sofas","recliners","coffee_tables"] },
+  { id:9,  name:"Chicago Home Co.",           category:"furniture",   city:"Chicago",      state:"IL", zip:"60601", address:"22 W Adams St",              phone:"(312) 555-0912", rating:4.4, reviews:261, snap:true, services:["beds_mattresses","bedroom_sets","dining"] },
+  { id:10, name:"Atlanta Furniture Gallery",  category:"furniture",   city:"Atlanta",      state:"GA", zip:"30301", address:"180 Peachtree St NE",        phone:"(404) 555-1022", rating:4.2, reviews:189, snap:true, services:["sofas","dining","coffee_tables"] },
+  { id:23, name:"Manhattan Home Furnishings", category:"furniture",   city:"New York",     state:"NY", zip:"10001", address:"350 W 34th St",              phone:"(212) 555-2301", rating:4.6, reviews:408, snap:true, services:["beds_mattresses","sofas","bedroom_sets"] },
+  { id:24, name:"LA Living Furniture",        category:"furniture",   city:"Los Angeles",  state:"CA", zip:"90012", address:"800 S Broadway",             phone:"(213) 555-2401", rating:4.3, reviews:227, snap:true, services:["sofas","coffee_tables","recliners"] },
+  { id:25, name:"Queen City Furniture",       category:"furniture",   city:"Charlotte",    state:"NC", zip:"28202", address:"200 S College St",           phone:"(704) 555-2501", rating:4.1, reviews:143, snap:true, services:["dining","bedroom_sets","beds_mattresses"] },
   // ── Electronics ────────────────────────────────────────
-  { id:11, name:"TechWorld Electronics",      category:"electronics", city:"Miami",        state:"FL", zip:"33101", address:"800 Brickell Ave",           phone:"(305) 555-1134", rating:4.6, reviews:412, snap:true },
-  { id:12, name:"Circuit Hub Austin",         category:"electronics", city:"Austin",       state:"TX", zip:"78704", address:"620 S Lamar Blvd",           phone:"(512) 555-1245", rating:4.5, reviews:337, snap:true },
-  { id:13, name:"Denver Tech Center",         category:"electronics", city:"Denver",       state:"CO", zip:"80201", address:"1700 Lincoln St",            phone:"(303) 555-1356", rating:4.3, reviews:218, snap:true },
-  { id:26, name:"NYC Tech Hub",               category:"electronics", city:"New York",     state:"NY", zip:"10002", address:"240 E Broadway",             phone:"(212) 555-2601", rating:4.7, reviews:519, snap:true },
-  { id:27, name:"PDX Electronics",            category:"electronics", city:"Portland",     state:"OR", zip:"97201", address:"1000 SW Broadway",           phone:"(503) 555-2701", rating:4.4, reviews:198, snap:true },
+  { id:11, name:"TechWorld Electronics",      category:"electronics", city:"Miami",        state:"FL", zip:"33101", address:"800 Brickell Ave",           phone:"(305) 555-1134", rating:4.6, reviews:412, snap:true, services:["tvs","audio_speakers","smart_home"] },
+  { id:12, name:"Circuit Hub Austin",         category:"electronics", city:"Austin",       state:"TX", zip:"78704", address:"620 S Lamar Blvd",           phone:"(512) 555-1245", rating:4.5, reviews:337, snap:true, services:["laptops_computers","gaming","smartphones"] },
+  { id:13, name:"Denver Tech Center",         category:"electronics", city:"Denver",       state:"CO", zip:"80201", address:"1700 Lincoln St",            phone:"(303) 555-1356", rating:4.3, reviews:218, snap:true, services:["tvs","laptops_computers","smart_home"] },
+  { id:26, name:"NYC Tech Hub",               category:"electronics", city:"New York",     state:"NY", zip:"10002", address:"240 E Broadway",             phone:"(212) 555-2601", rating:4.7, reviews:519, snap:true, services:["smartphones","audio_speakers","gaming"] },
+  { id:27, name:"PDX Electronics",            category:"electronics", city:"Portland",     state:"OR", zip:"97201", address:"1000 SW Broadway",           phone:"(503) 555-2701", rating:4.4, reviews:198, snap:true, services:["tvs","laptops_computers","audio_speakers"] },
   // ── Jewelry ────────────────────────────────────────────
-  { id:14, name:"Golden Mile Jewelry",        category:"jewelry",     city:"Las Vegas",    state:"NV", zip:"89109", address:"3600 Las Vegas Blvd S",      phone:"(702) 555-1467", rating:4.7, reviews:523, snap:true },
-  { id:15, name:"Orlando Fine Jewels",        category:"jewelry",     city:"Orlando",      state:"FL", zip:"32801", address:"455 Orange Ave",             phone:"(407) 555-1578", rating:4.4, reviews:296, snap:true },
-  { id:28, name:"Beacon Hill Jewelers",       category:"jewelry",     city:"Boston",       state:"MA", zip:"02101", address:"75 Charles St",              phone:"(617) 555-2801", rating:4.8, reviews:341, snap:true },
+  { id:14, name:"Golden Mile Jewelry",        category:"jewelry",     city:"Las Vegas",    state:"NV", zip:"89109", address:"3600 Las Vegas Blvd S",      phone:"(702) 555-1467", rating:4.7, reviews:523, snap:true, services:["rings","engagement_rings","necklaces"] },
+  { id:15, name:"Orlando Fine Jewels",        category:"jewelry",     city:"Orlando",      state:"FL", zip:"32801", address:"455 Orange Ave",             phone:"(407) 555-1578", rating:4.4, reviews:296, snap:true, services:["necklaces","earrings","bracelets"] },
+  { id:28, name:"Beacon Hill Jewelers",       category:"jewelry",     city:"Boston",       state:"MA", zip:"02101", address:"75 Charles St",              phone:"(617) 555-2801", rating:4.8, reviews:341, snap:true, services:["watches","rings","engagement_rings"] },
   // ── Appliances ─────────────────────────────────────────
-  { id:16, name:"Phoenix Appliance Depot",    category:"appliances",  city:"Phoenix",      state:"AZ", zip:"85004", address:"101 N 1st Ave",              phone:"(602) 555-1689", rating:4.2, reviews:167, snap:true },
-  { id:17, name:"Mile High Appliances",       category:"appliances",  city:"Denver",       state:"CO", zip:"80202", address:"1600 Glenarm Pl",            phone:"(303) 555-1790", rating:4.5, reviews:234, snap:true },
-  { id:29, name:"Boston Home Appliances",     category:"appliances",  city:"Boston",       state:"MA", zip:"02102", address:"500 Atlantic Ave",           phone:"(617) 555-2901", rating:4.3, reviews:189, snap:true },
+  { id:16, name:"Phoenix Appliance Depot",    category:"appliances",  city:"Phoenix",      state:"AZ", zip:"85004", address:"101 N 1st Ave",              phone:"(602) 555-1689", rating:4.2, reviews:167, snap:true, services:["refrigerators","washers_dryers","ovens_ranges"] },
+  { id:17, name:"Mile High Appliances",       category:"appliances",  city:"Denver",       state:"CO", zip:"80202", address:"1600 Glenarm Pl",            phone:"(303) 555-1790", rating:4.5, reviews:234, snap:true, services:["washers_dryers","dishwashers","microwaves"] },
+  { id:29, name:"Boston Home Appliances",     category:"appliances",  city:"Boston",       state:"MA", zip:"02102", address:"500 Atlantic Ave",           phone:"(617) 555-2901", rating:4.3, reviews:189, snap:true, services:["refrigerators","ovens_ranges","air_conditioners"] },
   // ── Flooring ───────────────────────────────────────────
-  { id:18, name:"DFW Flooring Solutions",     category:"flooring",    city:"Dallas",       state:"TX", zip:"75202", address:"2000 Main St",               phone:"(214) 555-1891", rating:4.3, reviews:145, snap:true },
-  { id:19, name:"Sunshine Floors",            category:"flooring",    city:"Orlando",      state:"FL", zip:"32802", address:"600 W Amelia St",            phone:"(407) 555-1912", rating:4.1, reviews:112, snap:true },
-  { id:20, name:"Seattle Hardwood Co.",       category:"flooring",    city:"Seattle",      state:"WA", zip:"98101", address:"800 Pike St",                phone:"(206) 555-2023", rating:4.6, reviews:188, snap:true },
-  { id:30, name:"Rose City Flooring",         category:"flooring",    city:"Portland",     state:"OR", zip:"97202", address:"2100 SE Hawthorne Blvd",     phone:"(503) 555-3001", rating:4.4, reviews:156, snap:true },
+  { id:18, name:"DFW Flooring Solutions",     category:"flooring",    city:"Dallas",       state:"TX", zip:"75202", address:"2000 Main St",               phone:"(214) 555-1891", rating:4.3, reviews:145, snap:true, services:["hardwood","tile","laminate_vinyl"] },
+  { id:19, name:"Sunshine Floors",            category:"flooring",    city:"Orlando",      state:"FL", zip:"32802", address:"600 W Amelia St",            phone:"(407) 555-1912", rating:4.1, reviews:112, snap:true, services:["carpet","tile","area_rugs"] },
+  { id:20, name:"Seattle Hardwood Co.",       category:"flooring",    city:"Seattle",      state:"WA", zip:"98101", address:"800 Pike St",                phone:"(206) 555-2023", rating:4.6, reviews:188, snap:true, services:["hardwood","area_rugs"] },
+  { id:30, name:"Rose City Flooring",         category:"flooring",    city:"Portland",     state:"OR", zip:"97202", address:"2100 SE Hawthorne Blvd",     phone:"(503) 555-3001", rating:4.4, reviews:156, snap:true, services:["carpet","laminate_vinyl","area_rugs"] },
 ];
 
 /* FIX #1: Expanded CATEGORY_MAP with synonyms + colloquialisms */
@@ -858,6 +1041,64 @@ const CAT_CONFIG = {
   flooring:    { label:"Flooring",      emoji:"🪵", cls:"cat-flooring" },
 };
 
+/* ════════════════════════════════════════════════════════════
+   SUBCATEGORY TAXONOMY — powers the Klarna-style two-step search:
+   type a keyword → match a category or subcategory → click narrows
+   straight to a filtered store list (see openCategoryView below).
+   For a store locator the equivalent of a product subcategory is
+   "what kind of service/item this merchant carries," stored as
+   MOCK_STORES[i].services.
+════════════════════════════════════════════════════════════ */
+const SUBCATEGORIES = {
+  tires: [
+    { key:"tires",       label:"Tires",               emoji:"🛞", keywords:["tire","tires","rubber","retread"] },
+    { key:"wheels_rims",  label:"Wheels & Rims",       emoji:"⚙️", keywords:["wheel","wheels","rim","rims"] },
+    { key:"auto_repair",  label:"Auto Repair",         emoji:"🔩", keywords:["repair","mechanic"] },
+    { key:"oil_change",   label:"Oil Change & Service",emoji:"🛢️", keywords:["oil","oilchange","lube","service","maintenance"] },
+    { key:"brakes",       label:"Brakes",              emoji:"🛑", keywords:["brake","brakes"] },
+    { key:"alignment",    label:"Alignment & Rotation",emoji:"📐", keywords:["alignment","rotation","rotate"] },
+  ],
+  furniture: [
+    { key:"sofas",           label:"Sofas & Couches",   emoji:"🛋️", keywords:["sofa","sofas","couch","couches","sectional","loveseat"] },
+    { key:"beds_mattresses", label:"Beds & Mattresses", emoji:"🛏️", keywords:["bed","beds","mattress","mattresses"] },
+    { key:"dining",          label:"Dining Sets",       emoji:"🍽️", keywords:["dining","diningset","diningtable"] },
+    { key:"bedroom_sets",    label:"Bedroom Sets",      emoji:"🚪", keywords:["bedroom","dresser","wardrobe","nightstand"] },
+    { key:"recliners",       label:"Recliners",         emoji:"💺", keywords:["recliner","recliners"] },
+    { key:"coffee_tables",   label:"Coffee Tables",     emoji:"🪑", keywords:["coffeetable","sidetable","table","tables"] },
+  ],
+  electronics: [
+    { key:"tvs",               label:"TVs",                 emoji:"📺", keywords:["tv","tvs","television","smarttv"] },
+    { key:"laptops_computers", label:"Laptops & Computers", emoji:"💻", keywords:["laptop","laptops","computer","pc"] },
+    { key:"gaming",            label:"Gaming",              emoji:"🎮", keywords:["gaming","console","controller"] },
+    { key:"smartphones",       label:"Smartphones",         emoji:"📱", keywords:["phone","phones","smartphone","mobile"] },
+    { key:"audio_speakers",    label:"Audio & Speakers",    emoji:"🔊", keywords:["speaker","speakers","audio","headphone","earbuds","airpods"] },
+    { key:"smart_home",        label:"Smart Home",          emoji:"🏠", keywords:["smarthome","router"] },
+  ],
+  jewelry: [
+    { key:"rings",            label:"Rings",            emoji:"💍", keywords:["ring","rings"] },
+    { key:"engagement_rings", label:"Engagement Rings", emoji:"💎", keywords:["engagement","propose"] },
+    { key:"necklaces",        label:"Necklaces",        emoji:"📿", keywords:["necklace","necklaces","pendant","chain"] },
+    { key:"earrings",         label:"Earrings",         emoji:"✨", keywords:["earring","earrings"] },
+    { key:"watches",          label:"Watches",          emoji:"⌚", keywords:["watch","watches"] },
+    { key:"bracelets",        label:"Bracelets",        emoji:"⭕", keywords:["bracelet","bracelets","charm"] },
+  ],
+  appliances: [
+    { key:"refrigerators",    label:"Refrigerators",    emoji:"🧊", keywords:["fridge","refrigerator","refrigerators","freezer"] },
+    { key:"washers_dryers",   label:"Washers & Dryers", emoji:"🌀", keywords:["washer","dryer","washingmachine","tumbledryer"] },
+    { key:"ovens_ranges",     label:"Ovens & Ranges",   emoji:"🔥", keywords:["oven","stove","range"] },
+    { key:"dishwashers",      label:"Dishwashers",      emoji:"🍽️", keywords:["dishwasher","dishwashers"] },
+    { key:"microwaves",       label:"Microwaves",       emoji:"📻", keywords:["microwave","microwaves"] },
+    { key:"air_conditioners", label:"Air Conditioners", emoji:"❄️", keywords:["ac","airconditioner","cooling"] },
+  ],
+  flooring: [
+    { key:"hardwood",       label:"Hardwood",         emoji:"🪵", keywords:["hardwood","woodfloor"] },
+    { key:"carpet",         label:"Carpet",           emoji:"🧶", keywords:["carpet","carpets"] },
+    { key:"tile",           label:"Tile",             emoji:"◻️", keywords:["tile","tiles","floortile"] },
+    { key:"laminate_vinyl", label:"Laminate & Vinyl", emoji:"🪞", keywords:["laminate","vinyl"] },
+    { key:"area_rugs",      label:"Area Rugs",        emoji:"🟫", keywords:["rug","rugs","arearug"] },
+  ],
+};
+
 /* AI Hints for dropdown */
 const AI_HINTS = [
   { trigger: /financ|payment|credit|loan|afford|apply/i,       hint: "Ask me about FlexFi financing — how to apply, no credit needed." },
@@ -923,6 +1164,33 @@ const SUGGESTION_BANK = [
 const SEARCH_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>`;
 const STORE_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 9l1-5h16l1 5"/><path d="M3 9v11a1 1 0 001 1h5v-6h6v6h5a1 1 0 001-1V9"/></svg>`;
 
+// ── Klarna-style taxonomy autocomplete ──────────────────────────
+// Matches the typed text against top-level categories and, one level
+// down, the subcategories a store's `services` field draws from.
+// Row shape mirrors Klarna's "Beds & Mattresses  Category" /
+// "Bed Frames  in Beds & Mattresses" pattern.
+function generateTaxonomySuggestions(raw) {
+  const ql = raw.trim().toLowerCase();
+  if (ql.length < 2) return [];
+  const out = [];
+
+  for (const [catKey, cfg] of Object.entries(CAT_CONFIG)) {
+    if (cfg.label.toLowerCase().includes(ql)) {
+      out.push({ type:'taxonomy-cat', catKey, subKey:null, primary:cfg.label, tag:'Category', emoji:cfg.emoji });
+    }
+  }
+  for (const [catKey, subs] of Object.entries(SUBCATEGORIES)) {
+    const catLabel = CAT_CONFIG[catKey].label;
+    for (const sub of subs) {
+      const hit = sub.label.toLowerCase().includes(ql) || sub.keywords.some(k => k.startsWith(ql));
+      if (hit) {
+        out.push({ type:'taxonomy-sub', catKey, subKey:sub.key, primary:sub.label, tag:`in ${catLabel}`, emoji:sub.emoji });
+      }
+    }
+  }
+  return out.slice(0, 6);
+}
+
 function generateSuggestions(raw) {
   const q  = raw.trim();
   const ql = q.toLowerCase();
@@ -930,52 +1198,43 @@ function generateSuggestions(raw) {
   const seen = new Set();
 
   function push(s) {
-    const k = s.primary.toLowerCase();
+    const k = s.type + '|' + s.primary.toLowerCase();
     if (!seen.has(k)) { seen.add(k); results.push(s); }
   }
 
-  // ── 1. STORE NAME MATCHES ─────────────────────────────────────
+  // ── 1. TAXONOMY MATCHES — category/subcategory autocomplete, highest priority ──
+  for (const t of generateTaxonomySuggestions(q)) push(t);
+
+  // ── 2. STORE NAME MATCHES ─────────────────────────────────────
   // Only show if query is ≥3 chars and matches store name
   if (ql.length >= 3) {
+    let storeCount = 0;
     for (const store of MOCK_STORES) {
       if (store.name.toLowerCase().includes(ql)) {
         const cfg = CAT_CONFIG[store.category] || {};
         push({ type:'store', primary: store.name,
                secondary:`${store.city}, ${store.state} · ${cfg.label}`, query: store.name });
-        if (results.length >= 2) break;
+        if (++storeCount >= 2) break;
       }
     }
   }
 
-  // ── 2. SUGGESTION BANK COMPLETIONS (startsWith — like Amazon autocomplete) ──
+  // ── 3. SUGGESTION BANK COMPLETIONS (financing + colloquial phrases the taxonomy can't express) ──
   const bankMatches = SUGGESTION_BANK.filter(s => s.text.startsWith(ql) && s.text !== ql);
-  for (const m of bankMatches.slice(0, 5)) {
+  for (const m of bankMatches.slice(0, 3)) {
     push({ type:'phrase', primary: m.text, emoji: m.emoji, query: m.text });
   }
-
-  // ── 3. BANK CONTAINS MATCH (fallback if nothing starts with query) ──
   if (bankMatches.length === 0) {
     const contains = SUGGESTION_BANK.filter(s => s.text.includes(ql) && s.text !== ql);
-    for (const m of contains.slice(0, 4)) {
+    for (const m of contains.slice(0, 2)) {
       push({ type:'phrase', primary: m.text, emoji: m.emoji, query: m.text });
     }
   }
 
-  // ── 4. CITY + CATEGORY COMBOS ─────────────────────────────────
-  // ONLY when category is clearly detected from the query — not for generic terms
-  const intent = parseIntent(q);
-  if (intent.category && intent.confidence >= 0.5 && !intent.location.city && results.length < 5) {
-    const cfg = CAT_CONFIG[intent.category];
-    const cities = ["San Jose","Austin","Dallas","New York","Chicago"];
-    for (const city of cities.slice(0, 3)) {
-      push({ type:'location', primary:`${cfg.label} in ${city}`, emoji:'📍', query:`${cfg.label} in ${city}` });
-    }
-  }
-
-  // ── 5. DIRECT SEARCH (always last) ────────────────────────────
+  // ── 4. DIRECT SEARCH (always last — hands off to FlexAI conversational search) ──
   push({ type:'direct', primary: q, query: q });
 
-  return results.slice(0, 7);
+  return results.slice(0, 9);
 }
 
 // Amazon text pattern: `typed_portion` normal weight + **completion bold**
@@ -1172,6 +1431,12 @@ const state = {
   awaitingFinancingType: false,
   pendingFinancingStore: null,
   lastShownStores: [],
+  // Shared location context — set by the AI chat flow, device geolocation,
+  // or the category view's own location prompt. Whichever wins is shown
+  // back to the user (the "Shopping in [City]" chip) so a silent override
+  // never happens.
+  currentLocation: { city: null, zip: null },
+  categoryView: { catKey: null, subKey: null, sort: "best", minRating: 0, mode: "in-store" },
 };
 
 /* Financing product definitions */
@@ -1529,6 +1794,264 @@ function escHtml(str) {
     .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+// JSON.stringify() wraps values in literal " chars, which terminates a
+// double-quoted HTML attribute early (e.g. onclick="fn(${JSON.stringify(x)})").
+// Use this instead whenever a JSON.stringify()'d value is interpolated
+// directly into a double-quoted HTML attribute.
+function attrJson(v) {
+  return escHtml(JSON.stringify(v));
+}
+
+/* ════════════════════════════════════════════════════════════
+   CATEGORY BROWSE VIEW — Klarna-style fast path
+   Reached by clicking a category/subcategory row in the search
+   dropdown. Structured, filterable, sortable — no round trip through
+   the AI. Free-text queries still go to the FlexAI chat below via
+   the "Ask FlexAI" link or the hero search bar's direct-search row.
+════════════════════════════════════════════════════════════ */
+
+function setCurrentLocation(city, zip) {
+  if (!city && !zip) return;
+  state.currentLocation = { city: city || null, zip: zip || null };
+  if (document.getElementById("category-view")?.classList.contains("open")) {
+    renderCategoryView();
+  }
+}
+
+function openCategoryView(catKey, subKey) {
+  hideDropdown();
+  document.getElementById("search-input").value = "";
+  document.getElementById("search-input").blur();
+  state.categoryView = { catKey, subKey: subKey || null, sort: "best", minRating: 0, mode: "in-store" };
+  const section = document.getElementById("category-view");
+  section.classList.add("open");
+  renderCategoryView();
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeCategoryView() {
+  document.getElementById("category-view").classList.remove("open");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function switchToAiSearch() {
+  closeCategoryView();
+  setTimeout(() => document.getElementById("search-input").focus(), 350);
+}
+
+function selectSubcategory(key) {
+  state.categoryView.subKey = key || null;
+  renderCategoryView();
+}
+function setSort(value) {
+  state.categoryView.sort = value;
+  renderCategoryView();
+}
+function setRatingFilter(value) {
+  state.categoryView.minRating = value;
+  renderCategoryView();
+}
+function setViewMode(mode) {
+  state.categoryView.mode = mode;
+  renderCategoryView();
+}
+
+function promptCategoryLocation() {
+  state.currentLocation = { city: null, zip: null };
+  renderCategoryView();
+  setTimeout(() => document.getElementById("cv-loc-input")?.focus(), 50);
+}
+
+function submitCategoryLocation() {
+  const input = document.getElementById("cv-loc-input");
+  if (!input) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+  const zipMatch = raw.match(/\b\d{5}\b/);
+  if (zipMatch) {
+    setCurrentLocation(null, zipMatch[0]);
+  } else {
+    const key = raw.toLowerCase();
+    const canonical = CITY_CANONICAL[key] || raw.replace(/\b\w/g, c => c.toUpperCase());
+    setCurrentLocation(canonical, null);
+  }
+  renderCategoryView();
+}
+
+async function useMyLocationForCategory() {
+  if (!navigator.geolocation) return;
+  if (geoState.fetched && (geoState.city || geoState.zip)) {
+    setCurrentLocation(geoState.city, geoState.zip);
+    renderCategoryView();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      renderCategoryView();
+    },
+    () => { /* denied — location prompt stays visible, user can type instead */ }
+  );
+}
+
+function renderCategoryStoreCard(s) {
+  const cfg = CAT_CONFIG[s.category];
+  const stars = "★".repeat(Math.floor(s.rating)) + (s.rating % 1 >= 0.5 ? "★" : "");
+  const subDict = SUBCATEGORIES[s.category] || [];
+  const tagsHtml = (s.services || [])
+    .map(key => subDict.find(x => x.key === key))
+    .filter(Boolean)
+    .map(sub => `<span class="service-tag">${sub.emoji} ${escHtml(sub.label)}</span>`)
+    .join("");
+  return `
+    <div class="store-card">
+      <div class="store-card-top">
+        <div class="store-name">${escHtml(s.name)}</div>
+        <span class="category-badge ${cfg.cls}">${cfg.emoji} ${cfg.label}</span>
+      </div>
+      <div class="store-address">📍 ${escHtml(s.address)}, ${escHtml(s.city)}, ${escHtml(s.state)} ${escHtml(s.zip)}</div>
+      <div class="store-phone"><a href="tel:${s.phone}">${escHtml(s.phone)}</a></div>
+      <div class="store-rating">
+        <span class="stars">${stars}</span>
+        <span>${s.rating.toFixed(1)}</span>
+        <span class="rating-count">(${s.reviews} reviews)</span>
+      </div>
+      <div class="service-tags">${tagsHtml}</div>
+      <span class="snap-badge">✓ FlexFi Financing Accepted</span>
+      <div class="store-cta"><a href="#">View Store →</a></div>
+    </div>`;
+}
+
+function renderCategoryView() {
+  const { catKey, subKey, sort, minRating, mode } = state.categoryView;
+  const cfg = CAT_CONFIG[catKey];
+  const subs = SUBCATEGORIES[catKey] || [];
+  const activeSub = subs.find(s => s.key === subKey) || null;
+  const loc = state.currentLocation;
+
+  // ── Breadcrumb ──
+  document.getElementById("cv-breadcrumb").innerHTML = `
+    <span class="crumb" onclick="closeCategoryView()">Find a Store</span>
+    <span class="sep">/</span>
+    <span class="crumb${!activeSub ? " current" : ""}" onclick="selectSubcategory(null)">${escHtml(cfg.label)}</span>
+    ${activeSub ? `<span class="sep">/</span><span class="crumb current">${escHtml(activeSub.label)}</span>` : ""}`;
+
+  // ── Header ──
+  document.getElementById("cv-emoji").textContent = activeSub ? activeSub.emoji : cfg.emoji;
+  document.getElementById("cv-title").textContent = activeSub ? activeSub.label : cfg.label;
+  document.getElementById("cv-desc").textContent = activeSub
+    ? `FlexFi-approved stores offering ${activeSub.label.toLowerCase()} near you.`
+    : `Browse every FlexFi-approved ${cfg.label.toLowerCase()} store, or narrow it down below.`;
+
+  // ── Location row: chip if known, non-blocking prompt if not (Klarna's flow
+  // never blocks results on location — narrower results are a bonus, not a gate) ──
+  const locRow = document.getElementById("cv-locrow");
+  if (loc.city || loc.zip) {
+    const label = loc.city || `ZIP ${loc.zip}`;
+    locRow.innerHTML = `
+      <span class="cv-loc-chip">📍 Shopping in ${escHtml(label)}</span>
+      <span class="cv-loc-change" onclick="promptCategoryLocation()">Change</span>`;
+  } else {
+    locRow.innerHTML = `
+      <div class="cv-loc-prompt">
+        📍 Set your location to see stores near you first —
+        <input id="cv-loc-input" type="text" placeholder="City or ZIP" autocomplete="off"
+               onkeydown="if(event.key==='Enter')submitCategoryLocation()" />
+        <button onclick="submitCategoryLocation()">Go</button>
+        ${navigator.geolocation ? `<button class="cv-geo-btn" onclick="useMyLocationForCategory()">📍 Use my location</button>` : ""}
+      </div>`;
+  }
+
+  // ── Mode toggle ──
+  document.getElementById("cv-mode-instore").classList.toggle("active", mode === "in-store");
+  document.getElementById("cv-mode-online").classList.toggle("active", mode === "online");
+
+  // ── Subcategory pills ──
+  document.getElementById("cv-pills").innerHTML =
+    `<div class="cv-pill${!subKey ? " active" : ""}" onclick="selectSubcategory(null)"><span class="cv-pill-emoji">${cfg.emoji}</span>All</div>` +
+    subs.map(s => `<div class="cv-pill${subKey === s.key ? " active" : ""}" onclick="selectSubcategory('${s.key}')"><span class="cv-pill-emoji">${s.emoji}</span>${escHtml(s.label)}</div>`).join("");
+
+  // ── Online tab: honest empty state — no fabricated online inventory ──
+  if (mode === "online") {
+    document.getElementById("cv-filter-services").innerHTML = "";
+    document.getElementById("cv-filter-rating").innerHTML = "";
+    document.getElementById("cv-results-count").textContent = "";
+    document.getElementById("cv-results").innerHTML = `
+      <div class="cv-empty">
+        <span class="cv-empty-icon">💳</span>
+        <p>Online ${cfg.label.toLowerCase()} partners are coming soon. Switch to <strong>In-Store</strong> to see FlexFi-approved locations near you today.</p>
+      </div>`;
+    return;
+  }
+
+  // ── Category + location scoping (honest fallback: never silently show
+  // zero results when the category has stores elsewhere in network) ──
+  const base = MOCK_STORES.filter(s => s.category === catKey);
+  let scoped = base;
+  let usedFallback = false;
+  let locLabel = null;
+  if (loc.city) {
+    locLabel = loc.city;
+    const inCity = base.filter(s => s.city.toLowerCase() === loc.city.toLowerCase());
+    if (inCity.length > 0) scoped = inCity; else usedFallback = true;
+  } else if (loc.zip) {
+    locLabel = `ZIP ${loc.zip}`;
+    const zipStore = MOCK_STORES.find(s => s.zip === loc.zip);
+    const inCity = zipStore ? base.filter(s => s.city === zipStore.city) : [];
+    if (inCity.length > 0) scoped = inCity; else usedFallback = true;
+  }
+
+  // ── Sidebar: service list mirrors the pills (same pattern Klarna uses —
+  // top pills + left rail navigate the same taxonomy) ──
+  const serviceListHtml =
+    `<button class="cv-filter-item${!subKey ? " active" : ""}" onclick="selectSubcategory(null)">
+      <span>${cfg.emoji} All ${escHtml(cfg.label)}</span><span class="cv-filter-count">${scoped.length}</span>
+    </button>` +
+    subs.map(s => {
+      const count = scoped.filter(st => st.services.includes(s.key)).length;
+      return `<button class="cv-filter-item${subKey === s.key ? " active" : ""}" onclick="selectSubcategory('${s.key}')">
+        <span>${s.emoji} ${escHtml(s.label)}</span><span class="cv-filter-count">${count}</span>
+      </button>`;
+    }).join("");
+  document.getElementById("cv-filter-services").innerHTML = serviceListHtml;
+
+  const ratingOptions = [{ v: 0, l: "Any rating" }, { v: 4, l: "4+ stars" }, { v: 4.5, l: "4.5+ stars" }];
+  document.getElementById("cv-filter-rating").innerHTML = ratingOptions.map(r => {
+    const count = scoped.filter(st => (!subKey || st.services.includes(subKey)) && st.rating >= r.v).length;
+    return `<button class="cv-filter-item${minRating === r.v ? " active" : ""}" onclick="setRatingFilter(${r.v})">
+      <span>${escHtml(r.l)}</span><span class="cv-filter-count">${count}</span>
+    </button>`;
+  }).join("");
+
+  // ── Final filter + sort ──
+  let results = scoped;
+  if (subKey) results = results.filter(s => s.services.includes(subKey));
+  if (minRating) results = results.filter(s => s.rating >= minRating);
+  results = [...results].sort((a, b) => {
+    if (sort === "reviews") return b.reviews - a.reviews;
+    // "best" and "rating" both rank on rating — no fabricated distance is
+    // sorted on, since these stores don't carry real geo-coordinates yet.
+    return b.rating - a.rating || b.reviews - a.reviews;
+  });
+
+  // ── Results count + grid ──
+  const label = activeSub ? activeSub.label : cfg.label;
+  let countHtml = `<strong>${results.length}</strong> ${escHtml(label)} store${results.length === 1 ? "" : "s"}`;
+  if (locLabel) countHtml += ` near <strong>${escHtml(locLabel)}</strong>`;
+  document.getElementById("cv-results-count").innerHTML = countHtml;
+
+  let gridHtml = "";
+  if (usedFallback) {
+    gridHtml += `<div class="fallback-banner">⚠️ No ${cfg.label.toLowerCase()} stores found near ${escHtml(locLabel)} — showing other FlexFi-approved ${cfg.label.toLowerCase()} stores</div>`;
+  }
+  if (results.length === 0) {
+    gridHtml += `<div class="cv-empty"><span class="cv-empty-icon">🔍</span><p>No stores match these filters. Try clearing the rating filter or picking a different service.</p></div>`;
+  } else {
+    gridHtml += `<div class="stores-grid">${results.map(renderCategoryStoreCard).join("")}</div>`;
+  }
+  document.getElementById("cv-results").innerHTML = gridHtml;
+}
+
 /* ════════════════════════════════════════════════════════════
    MAIN SEARCH HANDLER
 ════════════════════════════════════════════════════════════ */
@@ -1702,6 +2225,7 @@ function handleFollowUp(rawQuery) {
 ════════════════════════════════════════════════════════════ */
 function runSearch(intent) {
   state.pendingIntent = null;
+  setCurrentLocation(intent.location.city, intent.location.zip);
   const cfg = intent.category ? CAT_CONFIG[intent.category] : null;
   const locStr = intent.location.city || (intent.location.zip ? `ZIP ${intent.location.zip}` : "your area");
 
@@ -1790,7 +2314,9 @@ function updateDropdown(q) {
   const sugList = document.getElementById("suggestions-list");
 
   sugList.innerHTML = suggestions.map(s => {
-    // Icon: store icon for stores, category emoji for phrases/locations, search icon for rest
+    const isTaxonomy = s.type === 'taxonomy-cat' || s.type === 'taxonomy-sub';
+
+    // Icon: store icon for stores, category/subcategory emoji for taxonomy rows, search icon for rest
     let iconHtml;
     if (s.type === 'store') {
       iconHtml = `<div class="suggestion-icon">${STORE_SVG}</div>`;
@@ -1808,17 +2334,28 @@ function updateDropdown(q) {
       labelHtml = buildLabel(s.primary, q);
     }
 
-    const secondaryHtml = s.secondary
+    // Taxonomy rows: right-aligned tag ("Category" / "in Furniture") — Klarna pattern.
+    // Store rows: secondary line below (city, state · category).
+    const secondaryHtml = (!isTaxonomy && s.secondary)
       ? `<div class="suggestion-secondary">${escHtml(s.secondary)}</div>` : '';
+    const tagHtml = (isTaxonomy && s.tag)
+      ? `<div class="suggestion-cat-tag">${escHtml(s.tag)}</div>` : '';
 
     const extraClass = s.type === 'direct' ? ' direct-search' : '';
 
-    return `<div class="suggestion-item${extraClass}" onclick="fillAndSearch(${JSON.stringify(s.query)});updateInputDisplay(${JSON.stringify(s.query)})">
+    // Taxonomy rows jump straight into the filtered category view (fast path).
+    // Everything else hands off to FlexAI conversational search (flexible path).
+    const clickHandler = isTaxonomy
+      ? `openCategoryView(${attrJson(s.catKey)}, ${attrJson(s.subKey)})`
+      : `fillAndSearch(${attrJson(s.query)});updateInputDisplay(${attrJson(s.query)})`;
+
+    return `<div class="suggestion-item${extraClass}" onclick="${clickHandler}">
       ${iconHtml}
       <div class="suggestion-body">
         <div class="suggestion-primary">${labelHtml}</div>
         ${secondaryHtml}
       </div>
+      ${tagHtml}
     </div>`;
   }).join('');
 
