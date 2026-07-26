@@ -72,18 +72,21 @@
     .nav-cta:hover { background: var(--green-dark) !important; }
 
     /* ── Hero ─────────────────────────────────────────────── */
+    /* Compact page header — matches the real find-stores page (a locator
+       you land on, not a marketing hero you have to search your way out of). */
     .hero {
-      background: linear-gradient(135deg,#f0faf4 0%,#e8f5ee 40%,#eef1fb 100%);
-      padding: 64px 24px 80px; text-align: center;
+      background: var(--white); border-bottom: 1px solid var(--gray-200);
+      padding: 28px 24px 24px;
     }
+    .hero-inner { max-width: 1200px; margin: 0 auto; }
     .hero h1 {
-      font-size: clamp(26px,4vw,46px); font-weight: 700;
-      color: var(--dark); line-height: 1.15; margin-bottom: 12px;
+      font-size: 26px; font-weight: 700;
+      color: var(--dark); line-height: 1.2; margin-bottom: 4px;
     }
     .hero h1 span { color: var(--green); }
     .hero p {
-      font-size: 17px; color: var(--dark-60); max-width: 520px;
-      margin: 0 auto 36px; line-height: 1.6;
+      font-size: 14px; color: var(--dark-60);
+      margin: 0 0 18px; line-height: 1.5;
     }
     .geo-status {
       display: inline-flex; align-items: center; gap: 6px;
@@ -93,7 +96,7 @@
     }
 
     /* ── Search Bar ───────────────────────────────────────── */
-    .search-wrapper { max-width: 680px; margin: 0 auto; position: relative; }
+    .search-wrapper { max-width: 560px; margin: 0; position: relative; }
     .search-bar {
       display: flex; align-items: center;
       background: var(--white); border: 2px solid var(--gray-200);
@@ -295,7 +298,6 @@
     }
 
     /* ── Store Cards ──────────────────────────────────────── */
-    #results-section { margin-top: 24px; }
     .fallback-banner {
       background: var(--amber-light); border: 1px solid var(--amber);
       border-radius: var(--radius-sm); padding: 10px 16px; font-size: 14px;
@@ -531,14 +533,6 @@
     .category-view.open { display: block; animation: fadeSlideIn .2s ease; }
     .cv-inner { max-width: 1200px; margin: 0 auto; padding: 20px 24px 48px; }
 
-    .cv-back {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 600; color: var(--dark-60);
-      background: none; border: none; font-family: inherit; cursor: pointer;
-      padding: 6px 0; margin-bottom: 6px;
-    }
-    .cv-back:hover { color: var(--green); }
-
     .cv-breadcrumb { font-size: 12px; color: var(--dark-60); margin-bottom: 14px; }
     .cv-breadcrumb .crumb { cursor: pointer; }
     .cv-breadcrumb .crumb:hover { color: var(--green); text-decoration: underline; }
@@ -642,7 +636,7 @@
 
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 768px) {
-      .hero { padding: 40px 16px 56px; }
+      .hero { padding: 20px 16px 18px; }
       nav { display: none; }
       main { padding: 20px 16px 60px; }
       .search-ai-badge { display: none; }
@@ -689,10 +683,14 @@
   </div>
 </header>
 
-<!-- ── Hero + Search ──────────────────────────────────────── -->
+<!-- ── Store Locator Header ─────────────────────────────────
+     This is the app's landing view — a search box over the store
+     locator, not a marketing hero. Natural-language queries and
+     structured category clicks both drive the same locator below. -->
 <section class="hero" id="hero-section">
-  <h1>Find <span>FlexFi-Approved</span> Stores Near You</h1>
-  <p>Just tell us what you're looking for — our AI finds the right store for you.</p>
+ <div class="hero-inner">
+  <h1>Discover a store and apply <span>today</span></h1>
+  <p>Search naturally — "I need tires" or "furniture near 78701" — or browse by category below.</p>
 
   <!-- Geo status indicator (hidden until location is known) -->
   <div class="geo-status" id="geo-status" style="display:none;">
@@ -748,14 +746,15 @@
       </div>
     </div>
   </div>
+ </div>
 </section>
 
-<!-- ── Category Browse View (Klarna-style fast path) ────────
-     Reached by clicking a category/subcategory row in the search
-     dropdown. Free-text queries still go to the FlexAI chat below. -->
+<!-- ── Store Locator (the app's landing content) ─────────────
+     Always visible — set by a taxonomy click in the search dropdown,
+     by the AI chat resolving a store_search query, or the default
+     category on first load. -->
 <section class="category-view" id="category-view">
   <div class="cv-inner">
-    <button class="cv-back" onclick="closeCategoryView()">← Back to search</button>
     <nav class="cv-breadcrumb" id="cv-breadcrumb"></nav>
 
     <div class="cv-header">
@@ -807,7 +806,6 @@
 <!-- ── Main Content ───────────────────────────────────────── -->
 <main>
   <div id="chat-thread"></div>
-  <div id="results-section"></div>
 </main>
 
 <!-- ── Sticky Chat Input Bar ─────────────────────────────── -->
@@ -1040,6 +1038,7 @@ const CAT_CONFIG = {
   appliances:  { label:"Appliances",    emoji:"🏠", cls:"cat-appliances" },
   flooring:    { label:"Flooring",      emoji:"🪵", cls:"cat-flooring" },
 };
+const DEFAULT_CATEGORY = Object.keys(CAT_CONFIG)[0]; // "tires" — shown on first load
 
 /* ════════════════════════════════════════════════════════════
    SUBCATEGORY TAXONOMY — powers the Klarna-style two-step search:
@@ -1499,20 +1498,6 @@ window.addEventListener("scroll", () => {
 }, { passive: true });
 
 /* ════════════════════════════════════════════════════════════
-   FIX #9: SMART SCROLL — never scroll UP, only down if needed
-════════════════════════════════════════════════════════════ */
-function smartScroll(element) {
-  if (!element) return;
-  const rect = element.getBoundingClientRect();
-  const alreadyInView = rect.top >= -50 && rect.top <= window.innerHeight * 0.8;
-  const belowViewport = rect.top > window.innerHeight;
-  if (!alreadyInView && belowViewport) {
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-  // If element is above viewport or partially visible — don't scroll; user is reading nearby content
-}
-
-/* ════════════════════════════════════════════════════════════
    UI HELPERS
 ════════════════════════════════════════════════════════════ */
 function showChatBar() {
@@ -1619,45 +1604,6 @@ function appendAiMsg(html, delay = 600) {
     }
     state.messages.push({ role: "ai", text: html });
   }, delay);
-}
-
-function renderStoreCards(stores, isFallback = false, priceFilter = null) {
-  const section = document.getElementById("results-section");
-  let html = "";
-  if (isFallback) {
-    const catLabel = stores[0] ? (CAT_CONFIG[stores[0].category]?.label || "similar") : "similar";
-    html += `<div class="fallback-banner">⚠️ No exact matches found — showing ${catLabel} stores you might like</div>`;
-  }
-  html += `<div class="stores-grid">`;
-  for (const s of stores) {
-    const cfg = CAT_CONFIG[s.category] || { label: s.category, emoji: "🏪", cls: "" };
-    const stars = "★".repeat(Math.floor(s.rating)) + (s.rating % 1 >= 0.5 ? "★" : "");
-    const priceBadge = priceFilter
-      ? `<span class="price-badge">💰 ${priceFilter.max ? "Under $"+priceFilter.max : ""}${priceFilter.min ? "Over $"+priceFilter.min : ""}</span>`
-      : "";
-    html += `
-      <div class="store-card">
-        <div class="store-card-top">
-          <div class="store-name">${escHtml(s.name)}</div>
-          <span class="category-badge ${cfg.cls}">${cfg.emoji} ${cfg.label}</span>
-        </div>
-        <div class="store-address">📍 ${escHtml(s.address)}, ${escHtml(s.city)}, ${escHtml(s.state)} ${escHtml(s.zip)}</div>
-        <div class="store-phone"><a href="tel:${s.phone}">${escHtml(s.phone)}</a></div>
-        <div class="store-rating">
-          <span class="stars">${stars}</span>
-          <span>${s.rating.toFixed(1)}</span>
-          <span class="rating-count">(${s.reviews} reviews)</span>
-        </div>
-        ${s.snap ? '<span class="snap-badge">✓ FlexFi Financing Accepted</span>' : ""}
-        ${priceBadge}
-        <div class="store-cta"><a href="#">View Store →</a></div>
-      </div>`;
-  }
-  html += `</div>`;
-  setTimeout(() => {
-    section.innerHTML = html;
-    smartScroll(section); // FIX #9: only scroll if section is off-screen below
-  }, 700);
 }
 
 /* Show financing type selector — asks user LTO / RIC / Loan */
@@ -1818,24 +1764,30 @@ function setCurrentLocation(city, zip) {
   }
 }
 
-function openCategoryView(catKey, subKey) {
+// The locator is the app's permanent landing content — this both opens it
+// on page load (with the default category) and re-targets it whenever a
+// taxonomy suggestion is clicked or the AI chat resolves a store_search intent.
+function openCategoryView(catKey, subKey, opts = {}) {
   hideDropdown();
-  document.getElementById("search-input").value = "";
-  document.getElementById("search-input").blur();
+  if (!opts.keepSearchInput) {
+    document.getElementById("search-input").value = "";
+    document.getElementById("search-input").blur();
+  }
   state.categoryView = { catKey, subKey: subKey || null, sort: "best", minRating: 0, mode: "in-store" };
   const section = document.getElementById("category-view");
   section.classList.add("open");
   renderCategoryView();
-  section.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!opts.skipScroll) section.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function closeCategoryView() {
-  document.getElementById("category-view").classList.remove("open");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+// "Find a Store" breadcrumb click — resets back to the default category/filters,
+// same idea as clicking a site logo to return home.
+function resetCategoryView() {
+  openCategoryView(DEFAULT_CATEGORY, null);
 }
 
 function switchToAiSearch() {
-  closeCategoryView();
+  window.scrollTo({ top: 0, behavior: "smooth" });
   setTimeout(() => document.getElementById("search-input").focus(), 350);
 }
 
@@ -1931,7 +1883,7 @@ function renderCategoryView() {
 
   // ── Breadcrumb ──
   document.getElementById("cv-breadcrumb").innerHTML = `
-    <span class="crumb" onclick="closeCategoryView()">Find a Store</span>
+    <span class="crumb" onclick="resetCategoryView()">Find a Store</span>
     <span class="sep">/</span>
     <span class="crumb${!activeSub ? " current" : ""}" onclick="selectSubcategory(null)">${escHtml(cfg.label)}</span>
     ${activeSub ? `<span class="sep">/</span><span class="crumb current">${escHtml(activeSub.label)}</span>` : ""}`;
@@ -2247,17 +2199,22 @@ function runSearch(intent) {
     appendAiMsg(
       `Found <strong>${stores.length} ${cfg ? cfg.label : ""} store${stores.length > 1 ? "s" : ""}</strong> near <strong>${locStr}</strong> that accept FlexFi financing! 🎉${priceNote}`
     );
-    renderStoreCards(stores, false, intent.priceFilter);
   } else {
     const fallback = fallbackSearch(intent);
     if (fallback.length > 0) {
       appendAiMsg(
         `I didn't find ${cfg ? cfg.label.toLowerCase() : "stores"} in <strong>${locStr}</strong>, but here are some <strong>${cfg ? cfg.label.toLowerCase() : ""} stores</strong> that accept FlexFi financing nearby.${priceNote}`
       );
-      renderStoreCards(fallback, true, intent.priceFilter);
     } else {
       appendAiMsg(`Hmm, I couldn't find any stores matching your search. Try a different city or category, or <a href="#apply-lto" style="color:var(--green);font-weight:600;">apply for financing</a> and find a partner store after approval.`);
     }
+  }
+
+  // Drive the SAME locator grid the rest of the app uses — natural language
+  // is just another way to set its category + location filters, not a
+  // separate results panel (see PLAN.md: intent classifies, one view renders).
+  if (intent.category) {
+    openCategoryView(intent.category, null, { skipScroll: false, keepSearchInput: true });
   }
 }
 
@@ -2396,8 +2353,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("chat-input-bar").classList.remove("visible");
   document.body.classList.remove("chat-active");
 
-  showWelcome();
-  tryAutoGeolocate(); // FIX #10: silently try location on load
+  // Land on the store locator itself (default category, all locations)
+  // instead of a marketing hero — this is the app, not an ad for the app.
+  openCategoryView(DEFAULT_CATEGORY, null, { skipScroll: true, keepSearchInput: true });
+  tryAutoGeolocate(); // FIX #10: silently try location on load — narrows the locator once resolved
 
   input.addEventListener("input", onSearchInput);
   input.addEventListener("keydown", e => {
