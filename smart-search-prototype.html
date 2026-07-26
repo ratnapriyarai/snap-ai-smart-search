@@ -22,6 +22,9 @@
       --gray-500:    #6b7280;
       --amber:       #f59e0b;
       --amber-light: #fffbeb;
+      --violet:      #6d4aff;
+      --violet-dark: #5636d1;
+      --violet-light:#f2edff;
       --shadow-sm:   0 1px 3px rgba(0,0,0,0.10);
       --shadow-md:   0 4px 16px rgba(0,0,0,0.12);
       --shadow-lg:   0 8px 32px rgba(0,0,0,0.18);
@@ -590,6 +593,41 @@
     .mp-cta-row { margin-top: 8px; display: flex; align-items: center; gap: 12px; }
     .cv-mp-empty { font-size: 13px; color: var(--dark-60); }
 
+    /* ── FlexShopper — sister-company retailer, visually distinct from
+       Snap's own Marketplace (tinted panel + "Sponsored" eyebrow) since
+       it's a different merchant relationship, not a Snap-owned channel. ── */
+    .cv-fs-panel {
+      background: var(--violet-light); border-radius: var(--radius-md);
+      padding: 20px 22px;
+    }
+    .cv-fs-eyebrow {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--violet-dark); margin-bottom: 6px;
+    }
+    .cv-fs-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .cv-fs-title { font-size: 17px; font-weight: 700; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+    .cv-fs-link { font-size: 12.5px; font-weight: 600; color: var(--violet-dark); white-space: nowrap; }
+    .fs-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
+    .fs-card {
+      flex: 0 0 240px; background: var(--white); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-sm); padding: 14px; display: flex; align-items: center; gap: 12px;
+    }
+    .fs-card-icon { font-size: 24px; flex-shrink: 0; }
+    .fs-info { min-width: 0; flex: 1; }
+    .fs-brand { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--dark-60); }
+    .fs-name { font-size: 13px; font-weight: 600; color: var(--dark); line-height: 1.3; margin: 1px 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fs-price-row { display: flex; align-items: baseline; gap: 6px; }
+    .fs-price { font-size: 14.5px; font-weight: 700; color: var(--dark); }
+    .fs-wk { font-size: 11px; color: var(--violet-dark); font-weight: 600; }
+    .fs-link-btn {
+      flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+      background: var(--violet-light); color: var(--violet-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; border: 1.5px solid var(--violet);
+      transition: background .15s, color .15s;
+    }
+    .fs-link-btn:hover { background: var(--violet); color: var(--white); }
+
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 768px) {
       .hero { padding: 20px 16px 18px; }
@@ -741,6 +779,20 @@
         </div>
         <p class="cv-mp-sub" id="cv-mp-sub">Ships anywhere — buy now or pay weekly, no store visit needed.</p>
         <div id="cv-marketplace"></div>
+      </div>
+
+      <!-- FlexShopper — sister-company retailer, a third independent result
+           source. Styled as its own tinted panel (not the plain Marketplace
+           treatment) since it's a different merchant relationship. -->
+      <div class="cv-section-block" id="cv-flexshopper-block">
+        <div class="cv-fs-panel">
+          <div class="cv-fs-eyebrow">Sponsored · FlexShopper</div>
+          <div class="cv-fs-header">
+            <div class="cv-fs-title" id="cv-fs-title">🛒 Also available on FlexShopper</div>
+            <a class="cv-fs-link" href="https://www.flexshopper.com" target="_blank" rel="noopener">Shop FlexShopper →</a>
+          </div>
+          <div id="cv-flexshopper"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1074,7 +1126,46 @@ const MARKETPLACE_PRODUCTS = [
   { id:"mp27", name:"Player Stratocaster Electric Guitar", brand:"Fender", category:"musical_instruments", price:799.99, weeklyPrice:22.99 },
   { id:"mp28", name:"P-145 Digital Piano",               brand:"Yamaha",   category:"musical_instruments", price:899.00, weeklyPrice:24.99 },
 ];
-const BRAND_LIST = [...new Set(MARKETPLACE_PRODUCTS.map(p => p.brand))];
+
+// FlexShopper — Snap Finance's sister-company retailer (flexshopper.com), a
+// third independent result source. Deliberately covers only the categories
+// where FlexShopper actually competes (electronics, appliances, furniture,
+// mattresses, car audio) — not tires, collision repair, medical devices,
+// musical instruments, or jewelry — so ranking has honest differentiation
+// instead of FlexShopper winning everywhere. Several items overlap the same
+// brand as Snap Marketplace at a different price, on purpose: real tiebreak
+// scenarios for "cheap X" style intents.
+const FLEXSHOPPER_PRODUCTS = [
+  // Electronics
+  { id:"fs1",  name:'55" 4K UHD Smart TV',              brand:"Vizio",    category:"electronics", price:379.99, weeklyPrice:14.99 },
+  { id:"fs2",  name:"iPad (10th Generation)",           brand:"Apple",    category:"electronics", price:429.00, weeklyPrice:13.49 },
+  { id:"fs3",  name:"WH-1000XM5 Headphones",            brand:"Sony",     category:"electronics", price:329.99, weeklyPrice:11.99 },
+  { id:"fs4",  name:"PlayStation 5 Console",             brand:"Sony",     category:"electronics", price:499.00, weeklyPrice:16.99 },
+  // Appliances
+  { id:"fs5",  name:"Front Load Washer",                 brand:"Samsung",  category:"appliances", price:829.99, weeklyPrice:22.99 },
+  { id:"fs6",  name:"Top Freezer Refrigerator",          brand:"GE",       category:"appliances", price:699.99, weeklyPrice:19.99 },
+  { id:"fs7",  name:"Electric Dryer",                    brand:"Whirlpool",category:"appliances", price:649.99, weeklyPrice:17.99 },
+  // Furniture
+  { id:"fs8",  name:"Reversible Sectional Sofa",         brand:"Ashley",   category:"furniture", price:1199.00, weeklyPrice:29.99 },
+  { id:"fs9",  name:"5-Piece Dining Set",                brand:"Signature Design", category:"furniture", price:849.00, weeklyPrice:22.99 },
+  // Mattresses
+  { id:"fs10", name:"Hybrid Mattress, Queen",            brand:"Purple",   category:"mattresses", price:1199.00, weeklyPrice:31.99 },
+  { id:"fs11", name:"Cloud Mattress, Queen",             brand:"Tempur-Pedic", category:"mattresses", price:1399.00, weeklyPrice:36.99 },
+  // Car Audio
+  { id:"fs12", name:"Double-DIN Car Stereo",             brand:"Kenwood",  category:"car_audio", price:179.99, weeklyPrice:15.99 },
+  { id:"fs13", name:"12-Inch Car Subwoofer",             brand:"JBL",      category:"car_audio", price:129.99, weeklyPrice:11.99 },
+];
+
+const BRAND_LIST = [...new Set([...MARKETPLACE_PRODUCTS, ...FLEXSHOPPER_PRODUCTS].map(p => p.brand))];
+
+// Lets a bare brand/product query ("iPad", "PS5") resolve to the right
+// category even with no category keyword in the sentence — otherwise a
+// brand-only ask would silently fall back to the default category and
+// never reach the Marketplace/FlexShopper results it should lead with.
+const BRAND_CATEGORY = {};
+for (const p of [...MARKETPLACE_PRODUCTS, ...FLEXSHOPPER_PRODUCTS]) {
+  if (!(p.brand in BRAND_CATEGORY)) BRAND_CATEGORY[p.brand] = p.category;
+}
 
 /* AI Hints for dropdown */
 const AI_HINTS = [
@@ -1278,6 +1369,15 @@ function parseIntent(rawQuery) {
     if (q.includes(b.toLowerCase())) { intent.brand = b; break; }
   }
 
+  // A real brand name is a stronger, more specific signal than a fuzzy
+  // keyword guess — set category from it now, before the fuzzy category
+  // pass below, so a short brand-only query (e.g. "Sony") can't get
+  // hijacked by an unrelated Levenshtein-distance-2 false positive (e.g.
+  // "sony" ~ "sofa" → Furniture) that a real keyword match would rule out.
+  if (intent.brand && BRAND_CATEGORY[intent.brand]) {
+    intent.category = BRAND_CATEGORY[intent.brand];
+  }
+
   // ZIP code
   const zipMatch = q.match(/\b(\d{5})\b/);
   if (zipMatch) intent.location.zip = zipMatch[1];
@@ -1290,9 +1390,12 @@ function parseIntent(rawQuery) {
     intent.useMyLocation = true;
   }
 
-  // FIX #1: Check TRICKY_PATTERNS first
-  for (const tp of TRICKY_PATTERNS) {
-    if (tp.pattern.test(rawQuery)) { intent.category = tp.category; break; }
+  // FIX #1: Check TRICKY_PATTERNS first (skipped if a brand match above
+  // already pinned the category — a real brand name is more specific)
+  if (!intent.category) {
+    for (const tp of TRICKY_PATTERNS) {
+      if (tp.pattern.test(rawQuery)) { intent.category = tp.category; break; }
+    }
   }
 
   // Category via fuzzy matching (if tricky patterns didn't match)
@@ -1382,6 +1485,25 @@ function searchStores(intent) {
 // Snap's physical stores don't carry batteries as their own category.
 function searchMarketplace({ category = null, brand = null, priceFilter = null, priceSort = null } = {}) {
   let results = MARKETPLACE_PRODUCTS;
+  if (brand) {
+    const b = brand.toLowerCase();
+    results = results.filter(p => p.brand.toLowerCase() === b);
+  } else if (category) {
+    results = results.filter(p => p.category === category);
+  }
+  if (priceFilter) {
+    if (priceFilter.max != null) results = results.filter(p => p.price <= priceFilter.max);
+    if (priceFilter.min != null) results = results.filter(p => p.price >= priceFilter.min);
+  }
+  return [...results].sort((a, b) => priceSort === "desc" ? b.price - a.price : a.price - b.price);
+}
+
+// FlexShopper search — same shape and rules as searchMarketplace(), against
+// the sister-company catalog. Kept as a separate function (not a shared
+// helper) since the two catalogs are independent merchant relationships and
+// may diverge in filtering rules later (e.g. FlexShopper-specific lease terms).
+function searchFlexShopper({ category = null, brand = null, priceFilter = null, priceSort = null } = {}) {
+  let results = FLEXSHOPPER_PRODUCTS;
   if (brand) {
     const b = brand.toLowerCase();
     results = results.filter(p => p.brand.toLowerCase() === b);
@@ -1837,13 +1959,17 @@ function renderCategoryView() {
     `<div class="cv-pill${catKey === key ? " active" : ""}" onclick="openCategoryView('${key}')"><span class="cv-pill-emoji">${c.emoji}</span>${escHtml(c.label)}</div>`
   ).join("");
 
-  // ── Marketplace results computed here (not inside its render fn) so we
-  // can decide section order below from the same numbers we render ──
+  // ── Marketplace + FlexShopper results computed here (not inside their
+  // render fns) so we can score section order below from the same numbers
+  // we render — three independent merchant sources, any of which can lead. ──
   const mpResults = searchMarketplace({ category: catKey, brand, priceFilter, priceSort });
+  const fsResults = searchFlexShopper({ category: catKey, brand, priceFilter, priceSort });
   renderMarketplaceSection(brand, priceFilter, mpResults);
+  renderFlexShopperSection(brand, fsResults);
 
   // ── Online tab: honest empty state for STORE results — no fabricated
-  // online inventory. (Marketplace above already covers "buy it online.") ──
+  // online inventory. (Marketplace/FlexShopper above already cover "buy it
+  // online.") Stores section stays visible to show that message. ──
   if (mode === "online") {
     document.getElementById("cv-results-count").textContent = "";
     document.getElementById("cv-results").innerHTML = `
@@ -1851,7 +1977,7 @@ function renderCategoryView() {
         <span class="cv-empty-icon">💳</span>
         <p>Online ${cfg.label.toLowerCase()} partners are coming soon. Switch to <strong>In-Store</strong> to see Snap Finance-approved locations near you today.</p>
       </div>`;
-    orderResultSections(false);
+    orderResultSections(computeSectionScores({ brand, priceFilter, priceSort, storeCount: 0, storeVisible: true, locScoped: false, mpResults, fsResults }));
     return;
   }
 
@@ -1899,22 +2025,78 @@ function renderCategoryView() {
   }
   document.getElementById("cv-results").innerHTML = gridHtml;
 
-  // ── Section order: an exact brand match on Marketplace is a stronger,
-  // more specific signal than a generic category browse of local stores —
-  // lead with it. A bare category browse (no brand) leads with Stores,
-  // since that's the locator's core job. ──
-  orderResultSections(!!brand && mpResults.length > 0);
+  // ── Section order: score all three sources on the same signals and let
+  // whichever is most relevant to *this* query lead — no fixed source
+  // always wins. See computeSectionScores(). ──
+  orderResultSections(computeSectionScores({
+    brand, priceFilter, priceSort,
+    storeCount: results.length, storeVisible: true,
+    locScoped: !!locLabel && !usedFallback,
+    mpResults, fsResults,
+  }));
 }
 
-// Moves whichever section is more relevant to the top of #cv-sections.
+// Scores each of the three result sources (Stores / Marketplace /
+// FlexShopper) on the same signals from this query, so whichever is most
+// relevant leads — instead of a fixed rule like "Marketplace always wins on
+// brand". A source scores `null` when it has nothing to show and should be
+// hidden entirely (never a leading — or trailing — empty section).
+function computeSectionScores({ brand, priceFilter, priceSort, storeCount, storeVisible, locScoped, mpResults, fsResults }) {
+  const scores = { stores: storeVisible ? 0 : null, marketplace: mpResults.length ? 0 : null, flexshopper: fsResults.length ? 0 : null };
+
+  if (brand) {
+    // A named brand is the most specific signal a shopper can give — it's a
+    // request for a particular product, not a department browse. Stores
+    // don't carry brand-level SKU data, so only the two online catalogs
+    // that actually stock it can lead here.
+    if (scores.marketplace !== null) scores.marketplace += 40;
+    if (scores.flexshopper !== null) scores.flexshopper += 40;
+  } else if (scores.stores !== null) {
+    // No brand named — a plain category browse, the locator's core job.
+    scores.stores += 20;
+  }
+
+  // A price constraint only rewards a catalog if it actually has matches
+  // under that constraint — a source with zero results isn't a contender
+  // no matter what base score it started with (and is already hidden above).
+  if (priceFilter) {
+    if (scores.marketplace !== null) scores.marketplace += 15;
+    if (scores.flexshopper !== null) scores.flexshopper += 15;
+  }
+
+  // A scoped, non-fallback local match is a strong signal for Stores: the
+  // shopper is asking about somewhere they can walk into today.
+  if (scores.stores !== null && storeCount > 0 && locScoped) scores.stores += 25;
+
+  // "Cheap X" / "premium X" is a literal price-ranking ask — when both
+  // online catalogs have matches, give the edge to whichever one's top item
+  // actually wins that comparison, since that's the real answer to the ask.
+  if (priceSort && scores.marketplace !== null && scores.flexshopper !== null) {
+    const mpTop = mpResults[0].price, fsTop = fsResults[0].price;
+    const flexWins = priceSort === "desc" ? fsTop > mpTop : fsTop < mpTop;
+    if (flexWins) scores.flexshopper += 8; else scores.marketplace += 8;
+  }
+
+  return scores;
+}
+
+// Moves whichever section is most relevant to the top of #cv-sections, and
+// hides any source with nothing to show (score === null) — never a fixed
+// order, never an empty section rendered just to keep a slot filled.
 // Actual DOM reordering (not CSS `order`) so `.cv-section-block:first-child`
 // picks up the right separator styling automatically.
-function orderResultSections(marketplaceFirst) {
+function orderResultSections(scores) {
   const wrap = document.getElementById("cv-sections");
-  const stores = document.getElementById("cv-stores-block");
-  const marketplace = document.getElementById("cv-marketplace-block");
-  if (marketplaceFirst) wrap.insertBefore(marketplace, stores);
-  else wrap.insertBefore(stores, marketplace);
+  const blocks = [
+    { key: "stores",      el: document.getElementById("cv-stores-block") },
+    { key: "marketplace", el: document.getElementById("cv-marketplace-block") },
+    { key: "flexshopper", el: document.getElementById("cv-flexshopper-block") },
+  ];
+  blocks.forEach(b => { b.el.style.display = scores[b.key] === null ? "none" : ""; });
+  blocks
+    .filter(b => scores[b.key] !== null)
+    .sort((a, b) => scores[b.key] - scores[a.key])
+    .forEach(b => wrap.appendChild(b.el));
 }
 
 function renderMarketplaceCard(p) {
@@ -1936,16 +2118,45 @@ function renderMarketplaceCard(p) {
     </div>`;
 }
 
+// No matches → orderResultSections() hides #cv-marketplace-block entirely,
+// so there's nothing here that needs an empty state of its own — but the
+// grid is still cleared so a hidden block never holds a stale prior render.
 function renderMarketplaceSection(brand, priceFilter, results) {
+  if (!results.length) { document.getElementById("cv-marketplace").innerHTML = ""; return; }
   document.getElementById("cv-mp-title").textContent = brand
-    ? `🛍️ ${brand} on Snap Marketplace${results.length ? " — exact match" : ""}`
+    ? `🛍️ ${brand} on Snap Marketplace — exact match`
     : `🛍️ Also on Snap Marketplace`;
   document.getElementById("cv-mp-sub").textContent = priceFilter
     ? `Ships anywhere — filtered to your price range, no store visit needed.`
     : `Ships anywhere — buy now or pay weekly, no store visit needed.`;
-  document.getElementById("cv-marketplace").innerHTML = results.length
-    ? `<div class="mp-row">${results.map(renderMarketplaceCard).join("")}</div>`
-    : `<p class="cv-mp-empty">No matching products on Snap Marketplace right now.</p>`;
+  document.getElementById("cv-marketplace").innerHTML = `<div class="mp-row">${results.map(renderMarketplaceCard).join("")}</div>`;
+}
+
+function renderFlexShopperCard(p) {
+  const cfg = CAT_CONFIG[p.category];
+  return `
+    <div class="fs-card">
+      <div class="fs-card-icon">${cfg.emoji}</div>
+      <div class="fs-info">
+        <div class="fs-brand">${escHtml(p.brand)}</div>
+        <div class="fs-name" title="${escHtml(p.name)}">${escHtml(p.name)}</div>
+        <div class="fs-price-row">
+          <span class="fs-price">$${p.price.toFixed(2)}</span>
+          <span class="fs-wk">or $${p.weeklyPrice.toFixed(2)}/wk</span>
+        </div>
+      </div>
+      <a class="fs-link-btn" href="https://www.flexshopper.com" target="_blank" rel="noopener" aria-label="View on FlexShopper" title="View on FlexShopper">↗</a>
+    </div>`;
+}
+
+// No matches → orderResultSections() hides #cv-flexshopper-block entirely,
+// so there's nothing here that needs an empty state of its own.
+function renderFlexShopperSection(brand, results) {
+  if (!results.length) { document.getElementById("cv-flexshopper").innerHTML = ""; return; }
+  document.getElementById("cv-fs-title").textContent = brand
+    ? `🛒 ${brand} on FlexShopper — exact match`
+    : `🛒 Also available on FlexShopper`;
+  document.getElementById("cv-flexshopper").innerHTML = `<div class="fs-row">${results.map(renderFlexShopperCard).join("")}</div>`;
 }
 
 /* ════════════════════════════════════════════════════════════
