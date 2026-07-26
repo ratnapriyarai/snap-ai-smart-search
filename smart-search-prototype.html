@@ -864,18 +864,33 @@ function tryAutoGeolocate() {
   }).catch(() => {}); // Permissions API not available — skip silently
 }
 
+// No network call — resolves lat/lon to the nearest city we have store
+// data for using CITY_COORDS + Haversine, entirely client-side. (An earlier
+// version called Nominatim's reverse-geocoding API here; that silently
+// failed whenever this page runs as a published Artifact, since Artifacts
+// block fetch() to external hosts.)
 async function reverseGeocode(lat, lon) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-      { headers: { "Accept-Language": "en" } }
+  const nearest = findNearestCity(lat, lon);
+  if (!nearest) return;
+  geoState.city = nearest.replace(/\b\w/g, c => c.toUpperCase());
+  geoState.zip = null;
+  geoState.fetched = true;
+  setCurrentLocation(geoState.city, geoState.zip);
+}
+
+// Actively requests geolocation for a "near me"-style query — as opposed to
+// tryAutoGeolocate() on page load, which only ever uses a permission that
+// was already granted. This is allowed to trigger the browser's permission
+// prompt, since the user just asked for "near me" directly.
+function resolveMyLocation() {
+  if (geoState.fetched && geoState.city) return Promise.resolve();
+  if (!navigator.geolocation) return Promise.resolve();
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      async pos => { await reverseGeocode(pos.coords.latitude, pos.coords.longitude); resolve(); },
+      () => resolve() // denied/unavailable — caller falls back to the plain results-line hint
     );
-    const data = await res.json();
-    geoState.city = data.address?.city || data.address?.town || data.address?.village || null;
-    geoState.zip  = data.address?.postcode || null;
-    geoState.fetched = true;
-    setCurrentLocation(geoState.city, geoState.zip);
-  } catch(e) { /* fail silently */ }
+  });
 }
 
 function updateGeoStatusBadge() {
@@ -1012,6 +1027,42 @@ const CITY_STATE = {
 // (e.g. "la" inside "salt LAke city").
 const CITY_LIST_BY_LENGTH = [...CITY_LIST].sort((a, b) => b.length - a.length);
 const CITY_CANONICAL = { "nyc":"New York","la":"Los Angeles","new york city":"New York" };
+
+// Approximate city-center coordinates for every city MOCK_STORES covers —
+// lets "near me" resolve entirely client-side (see findNearestCity below),
+// with no reverse-geocoding API call. That matters because this page can
+// run as a published Artifact, where a strict CSP blocks any fetch() to an
+// external host — an API-based reverse geocode would silently fail there.
+const CITY_COORDS = {
+  "san jose": [37.3382, -121.8863], "austin": [30.2672, -97.7431],
+  "phoenix": [33.4484, -112.0740], "san francisco": [37.7749, -122.4194],
+  "houston": [29.7604, -95.3698], "dallas": [32.7767, -96.7970],
+  "las vegas": [36.1699, -115.1398], "chicago": [41.8781, -87.6298],
+  "atlanta": [33.7490, -84.3880], "miami": [25.7617, -80.1918],
+  "denver": [39.7392, -104.9903], "orlando": [28.5383, -81.3792],
+  "seattle": [47.6062, -122.3321], "new york": [40.7128, -74.0060],
+  "los angeles": [34.0522, -118.2437], "boston": [42.3601, -71.0589],
+  "portland": [45.5152, -122.6784], "charlotte": [35.2271, -80.8431],
+  "salt lake city": [40.7608, -111.8910],
+};
+
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8, toRad = d => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Nearest city we actually have store data for — not necessarily the
+// user's real city, but honest: it's the closest thing we can act on.
+function findNearestCity(lat, lon) {
+  let best = null, bestDist = Infinity;
+  for (const [city, [clat, clon]] of Object.entries(CITY_COORDS)) {
+    const d = haversineMiles(lat, lon, clat, clon);
+    if (d < bestDist) { bestDist = d; best = city; }
+  }
+  return best;
+}
 
 /* Financing trigger words */
 const FINANCING_WORDS = [
@@ -1246,6 +1297,7 @@ function parseIntent(rawQuery) {
     priceSort: null,        // "asc" (cheap/budget) | "desc" (premium/high-end)
     brand: null,            // matched against BRAND_LIST — Marketplace-only signal
     transactionType: null,  // "rent" when the query says rent/rental/lease
+    useMyLocation: false,   // "near me"/"nearby" — resolve via geolocation, not text
     storeName: null,
     rawQuery,
     confidence: 0,
@@ -1291,6 +1343,14 @@ function parseIntent(rawQuery) {
   // ZIP code
   const zipMatch = q.match(/\b(\d{5})\b/);
   if (zipMatch) intent.location.zip = zipMatch[1];
+
+  // "near me"/"nearby" — a location signal too, just not a text one. It
+  // means "resolve via geolocation," not "search for a place literally
+  // named me." Only applies if no explicit city/ZIP is already in the query.
+  if (!intent.location.city && !intent.location.zip &&
+      /\b(near me|nearby|close to me|around me|around here|close by)\b/i.test(rawQuery)) {
+    intent.useMyLocation = true;
+  }
 
   // FIX #1: Check TRICKY_PATTERNS first
   for (const tp of TRICKY_PATTERNS) {
@@ -1518,7 +1578,7 @@ async function handleChatBarSearch() {
   hideDropdown();
   appendUserMsg(val);
   if (state.awaitingCategory || state.awaitingFinancingType) {
-    handleFollowUp(val);
+    await handleFollowUp(val);
   } else {
     const intent = parseIntent(val);
     if (intent.type === "greeting") {
@@ -1542,6 +1602,7 @@ async function handleChatBarSearch() {
         state.awaitingCategory = true; state.pendingIntent = intent;
         return;
       }
+      if (intent.useMyLocation) await resolveMyLocation();
       runSearch(intent);
     }
   }
@@ -1997,7 +2058,7 @@ async function handleSearch() {
 
   // Follow-up if awaiting info (including financing type selection)
   if (state.awaitingCategory || state.awaitingFinancingType) {
-    handleFollowUp(rawQuery);
+    await handleFollowUp(rawQuery);
     return;
   }
 
@@ -2052,16 +2113,18 @@ async function handleSearch() {
   }
 
   // Location narrows the locator's store results — it no longer gates them.
-  // Marketplace results are location-independent, and the locator view has
-  // its own inline, non-blocking "set your location" prompt (see
-  // renderCategoryView) — so there's nothing left to wait on here.
+  // Marketplace results are location-independent, and the locator view
+  // shows a plain-text hint instead of a blocking prompt (see
+  // renderCategoryView) — so there's nothing left to wait on here, except
+  // an explicit "near me", which is worth resolving before rendering.
+  if (intent.useMyLocation) await resolveMyLocation();
   runSearch(intent);
 }
 
 /* ════════════════════════════════════════════════════════════
    FOLLOW-UP HANDLER
 ════════════════════════════════════════════════════════════ */
-function handleFollowUp(rawQuery) {
+async function handleFollowUp(rawQuery) {
   const intent = parseIntent(rawQuery);
   const pending = state.pendingIntent || {};
 
@@ -2109,12 +2172,16 @@ function handleFollowUp(rawQuery) {
     if (!intent.location.city && !intent.location.zip && (pending.location?.city || pending.location?.zip)) {
       mergedIntent.location = pending.location;
     }
+    // Same idea for "near me": if the original query said it but this
+    // follow-up reply is just the category name, don't lose that signal.
+    if (!intent.useMyLocation && pending.useMyLocation) mergedIntent.useMyLocation = true;
     if (!mergedIntent.category) {
       appendAiMsg(`I didn't quite catch that. Could you specify? E.g.: ${buildCategoryPromptHtml()}`);
       state.awaitingCategory = true;
       return;
     }
     state.pendingIntent = null;
+    if (mergedIntent.useMyLocation) await resolveMyLocation();
     runSearch(mergedIntent);
     return;
   }
