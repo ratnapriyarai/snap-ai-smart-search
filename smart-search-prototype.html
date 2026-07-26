@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlexFi — AI-Powered Store Search Prototype</title>
+  <title>Snap Finance — AI-Powered Store Search Prototype</title>
   <style>
     /* ── Brand Tokens ─────────────────────────────────────── */
     :root {
@@ -65,6 +65,8 @@
       transition: background .15s var(--transition), color .15s;
     }
     nav a:hover { background: var(--gray-100); color: var(--dark); }
+    .nav-active { color: var(--green) !important; font-weight: 700; }
+    .nav-active:hover { background: var(--green-light) !important; }
     .nav-cta {
       background: var(--green) !important; color: var(--white) !important;
       border-radius: var(--radius-lg) !important;
@@ -127,6 +129,19 @@
     }
     #search-btn:hover { background: var(--green-dark); }
     #search-btn:active { transform: scale(0.97); }
+
+    /* The one control for setting location — an icon inside the single
+       search bar, not a separate field/banner. Turns green + fills once
+       a location is known, so its own state is the only feedback needed. */
+    .geo-icon-btn {
+      flex-shrink: 0; width: 38px; height: 38px; margin-right: 4px;
+      border: none; border-radius: 50%; background: transparent; color: var(--dark-60);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .geo-icon-btn:hover { background: var(--gray-100); color: var(--dark); }
+    .geo-icon-btn.active { color: var(--green); }
+    .geo-icon-btn.active:hover { background: var(--green-light); }
 
     /* ── Dropdown ─────────────────────────────────────────── */
     #dropdown {
@@ -298,26 +313,7 @@
       display: flex; flex-direction: column; gap: 10px;
     }
     .store-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-    .store-card-top {
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
-    }
     .store-name { font-size: 16px; font-weight: 700; color: var(--dark); line-height: 1.3; }
-    .category-badge {
-      font-size: 11px; font-weight: 700; letter-spacing: .4px;
-      padding: 3px 10px; border-radius: 20px; white-space: nowrap;
-      text-transform: uppercase; flex-shrink: 0;
-    }
-    .cat-tires       { background: #fff3cd; color: #856404; }
-    .cat-furniture   { background: #d1ecf1; color: #0c5460; }
-    .cat-electronics { background: var(--blue-light); color: var(--blue); }
-    .cat-jewelry     { background: #f8d7da; color: #721c24; }
-    .cat-appliances  { background: #d4edda; color: #155724; }
-    .cat-caraudio    { background: #e2d9f3; color: #4b2e83; }
-    .cat-collision   { background: #fde2df; color: #a13c2f; }
-    .cat-mattresses  { background: #dbeafe; color: #1e40af; }
-    .cat-medical     { background: #dcfce7; color: #166534; }
-    .cat-musical     { background: #fce7f3; color: #9d174d; }
-    .cat-other       { background: var(--gray-100); color: var(--dark-60); }
     .store-address  { font-size: 13px; color: var(--dark-60); line-height: 1.4; }
     .store-phone    { font-size: 13px; color: var(--green); font-weight: 600; }
     .store-phone a  { color: inherit; }
@@ -636,11 +632,11 @@
 <header>
   <div class="header-inner">
     <div class="logo">
-      <div class="logo-icon">F</div>
-      flexfi
+      <div class="logo-icon">S</div>
+      snap finance
     </div>
     <nav>
-      <a href="#">Find Stores</a>
+      <a href="#" class="nav-active">Find Stores</a>
       <a href="#">How It Works</a>
       <a href="#">Manage</a>
       <a href="#apply" class="nav-cta">Apply Now</a>
@@ -662,10 +658,17 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
         </svg>
-        FlexAI
+        Snap AI
       </div>
       <input id="search-input" type="text" autocomplete="off"
              placeholder='Try: "I need tires in San Jose" or "furniture near 78701"' />
+      <button id="geo-btn" type="button" class="geo-icon-btn" onclick="useMyLocationClicked()"
+              title="Use my location" aria-label="Use my location">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 21s-6.5-6.14-6.5-10.5a6.5 6.5 0 1 1 13 0C18.5 14.86 12 21 12 21z"/>
+          <circle cx="12" cy="10.5" r="2.25"/>
+        </svg>
+      </button>
       <button id="search-btn" onclick="handleSearch()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -678,7 +681,7 @@
     <div id="dropdown">
       <!-- Fix #6: Mobile close button -->
       <div class="dropdown-mobile-header">
-        <span style="font-weight:700;font-size:15px;">Search FlexFi Stores</span>
+        <span style="font-weight:700;font-size:15px;">Search Snap Finance Stores</span>
         <button class="dropdown-close-btn" onclick="hideDropdown()">✕</button>
       </div>
 
@@ -686,7 +689,7 @@
       <div class="dropdown-divider"></div>
 
       <div class="dropdown-ai-header">
-        <span class="ai-pill">✦ FlexAI</span>
+        <span class="ai-pill">✦ Snap AI</span>
         <span style="font-size:11px;color:var(--dark-60);">Conversational search</span>
       </div>
       <div class="snap-ai-panel" id="ai-panel" onclick="handleAiPanelClick()">
@@ -696,10 +699,10 @@
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
             </svg>
-            Ask FlexAI
+            Ask Snap AI
           </div>
           <div class="snap-ai-hint" id="ai-panel-hint">
-            Ask me anything — describe what you need and I'll find FlexFi-approved stores near you.
+            Ask me anything — describe what you need and I'll find Snap Finance-approved stores near you.
           </div>
         </div>
       </div>
@@ -774,7 +777,7 @@
       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
       </svg>
-      FlexAI
+      Snap AI
     </div>
     <input id="chat-input" type="text" autocomplete="off"
            placeholder="Ask a follow-up or search for something new…" />
@@ -837,6 +840,27 @@ function resolveMyLocation() {
       () => resolve() // denied/unavailable — caller falls back to the plain results-line hint
     );
   });
+}
+
+// The pin icon in the search bar — the one place a user can explicitly set
+// their location, short of typing it into a query. Not a separate field:
+// it's part of the same single search control.
+async function useMyLocationClicked() {
+  const btn = document.getElementById("geo-btn");
+  btn.disabled = true;
+  await resolveMyLocation();
+  btn.disabled = false;
+  updateGeoButtonState();
+  renderCategoryView();
+}
+
+function updateGeoButtonState() {
+  const btn = document.getElementById("geo-btn");
+  if (!btn) return;
+  const loc = state.currentLocation;
+  const known = loc.city || loc.zip;
+  btn.classList.toggle("active", !!known);
+  btn.title = known ? `Using ${loc.city || "ZIP " + loc.zip} as your location` : "Use my location";
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -929,9 +953,9 @@ const TRICKY_PATTERNS = [
 /* FIX #2: Multi-pattern store name extraction */
 const STORE_NAME_PATTERNS = [
   /(?:at|in the store|called|named|[-–:])\s+(.{3,50}?)(?:\?|$|,)/i,
-  /(?:does|do|is|will)\s+(.{3,50}?)\s+(?:take|accept|use|have|offer|do)\s+(?:snap|flexfi)/i,
-  /(?:snap|flexfi).*(?:at|in)\s+(.{3,50}?)(?:\?|$)/i,
-  /(?:can i use (?:snap|flexfi)|use (?:snap|flexfi) financing)\s+(?:at|in)\s+(.{3,50}?)(?:\?|$)/i,
+  /(?:does|do|is|will)\s+(.{3,50}?)\s+(?:take|accept|use|have|offer|do)\s+(?:snap|snap finance)/i,
+  /(?:snap|snap finance).*(?:at|in)\s+(.{3,50}?)(?:\?|$)/i,
+  /(?:can i use (?:snap|snap finance)|use (?:snap|snap finance) financing)\s+(?:at|in)\s+(.{3,50}?)(?:\?|$)/i,
 ];
 
 function extractStoreName(rawQuery) {
@@ -1073,15 +1097,15 @@ const BRAND_LIST = [...new Set(MARKETPLACE_PRODUCTS.map(p => p.brand))];
 
 /* AI Hints for dropdown */
 const AI_HINTS = [
-  { trigger: /financ|payment|credit|loan|afford|apply/i,       hint: "Ask me about FlexFi financing — how to apply, no credit needed." },
+  { trigger: /financ|payment|credit|loan|afford|apply/i,       hint: "Ask me about Snap Finance financing — how to apply, no credit needed." },
   { trigger: /tire|wheel|rim|auto|rubber|battery|brake/i,      hint: "Looking for tires or auto parts? I'll check stores near you AND Snap Marketplace." },
-  { trigger: /furni|couch|sofa|chair/i,                        hint: "Furniture stores? Share your location and I'll find FlexFi-approved stores near you." },
+  { trigger: /furni|couch|sofa|chair/i,                        hint: "Furniture stores? Share your location and I'll find Snap Finance-approved stores near you." },
   { trigger: /mattress|bed\b/i,                                hint: "Mattress shopping? I'll find stores near you and options on Snap Marketplace." },
-  { trigger: /electr|tv|laptop|computer|phone|gaming/i,        hint: "Electronics on your list? I can find stores near you that accept FlexFi." },
-  { trigger: /jewel|ring|necklace|watch|diamond/i,             hint: "Shopping for jewelry? Let me find FlexFi-approved jewelers near you." },
-  { trigger: /appli|washer|dryer|fridge|oven|stove/i,          hint: "Need appliances? Tell me your location and I'll show you FlexFi stores." },
+  { trigger: /electr|tv|laptop|computer|phone|gaming/i,        hint: "Electronics on your list? I can find stores near you that accept Snap Finance." },
+  { trigger: /jewel|ring|necklace|watch|diamond/i,             hint: "Shopping for jewelry? Let me find Snap Finance-approved jewelers near you." },
+  { trigger: /appli|washer|dryer|fridge|oven|stove/i,          hint: "Need appliances? Tell me your location and I'll show you Snap Finance stores." },
   { trigger: /car audio|speaker|subwoofer|stereo/i,            hint: "Car audio upgrade? I'll find installers near you." },
-  { trigger: /collision|body shop|dent|fender/i,               hint: "Need collision repair? I'll find FlexFi-approved shops near you." },
+  { trigger: /collision|body shop|dent|fender/i,               hint: "Need collision repair? I'll find Snap Finance-approved shops near you." },
   { trigger: /wheelchair|cpap|medical/i,                       hint: "Looking for medical equipment? I'll check stores near you." },
   { trigger: /guitar|piano|instrument/i,                       hint: "Musical instruments? I'll find stores near you and Snap Marketplace options." },
   { trigger: /rent|rental|lease/i,                              hint: "Renting? I'll flag Lease-to-Own options at stores and on Marketplace." },
@@ -1095,8 +1119,8 @@ const AI_HINTS = [
 // below can't express on its own. Category-specific phrases don't need to
 // live here anymore: the flat CAT_CONFIG + BRAND_LIST already drive those.
 const SUGGESTION_BANK = [
-  { text:"apply for flexfi financing", cat:"financing", emoji:"💳" },
-  { text:"flexfi financing options",   cat:"financing", emoji:"💳" },
+  { text:"apply for snap financing",   cat:"financing", emoji:"💳" },
+  { text:"snap financing options",     cat:"financing", emoji:"💳" },
   { text:"financing with no credit",   cat:"financing", emoji:"💳" },
   { text:"financing near me",          cat:"financing", emoji:"💳" },
 ];
@@ -1167,7 +1191,7 @@ function generateSuggestions(raw) {
     }
   }
 
-  // ── 4. DIRECT SEARCH (always last — hands off to FlexAI conversational search) ──
+  // ── 4. DIRECT SEARCH (always last — hands off to Snap AI conversational search) ──
   push({ type:'direct', primary: q, query: q });
 
   return results.slice(0, 9);
@@ -1432,12 +1456,12 @@ const FINANCING_TYPES = {
     icon: "🔄",
     title: "Lease-to-Own (LTO)",
     badge: "Most Popular",
-    desc: "FlexFi's flagship product. Get the items you need today and pay over time with flexible lease payments. No traditional credit check required — approval in minutes.",
+    desc: "Snap Finance's flagship product. Get the items you need today and pay over time with flexible lease payments. No traditional credit check required — approval in minutes.",
     features: [
       "No credit needed — alternative approval process",
       "Flexible payment schedule (weekly, bi-weekly, monthly)",
       "Early purchase options to save money",
-      "Shop at thousands of FlexFi partner stores",
+      "Shop at thousands of Snap Finance partner stores",
     ],
     cta: "Start LTO Application →",
     url: "#apply-lto",
@@ -1453,7 +1477,7 @@ const FINANCING_TYPES = {
       "Fixed monthly payment amount — no surprises",
       "Defined loan term with a clear payoff date",
       "Competitive interest rates",
-      "Available at select FlexFi partner retailers",
+      "Available at select Snap Finance partner retailers",
     ],
     cta: "Explore RIC Options →",
     url: "#find-stores",
@@ -1464,7 +1488,7 @@ const FINANCING_TYPES = {
     icon: "💵",
     title: "Personal Loan",
     badge: "Lump Sum",
-    desc: "Need a lump sum up front? A personal loan gives you cash deposited directly to your account. Use it for any purchase at any store — not limited to FlexFi partners.",
+    desc: "Need a lump sum up front? A personal loan gives you cash deposited directly to your account. Use it for any purchase at any store — not limited to Snap Finance partners.",
     features: [
       "Funds deposited directly to your bank account",
       "Use at any store — not restricted to partners",
@@ -1516,7 +1540,7 @@ async function handleChatBarSearch() {
     if (intent.type === "greeting") {
       showWelcome();
     } else if (intent.type === "financing") {
-      appendAiMsg(`FlexFi offers several financing options — which type are you looking for?`);
+      appendAiMsg(`Snap Finance offers several financing options — which type are you looking for?`);
       renderFinancingCard(intent.storeName || null);
     } else {
       // Check for store lookup
@@ -1614,7 +1638,7 @@ function renderFinancingCard(storeName = null) {
         <div>
           <div class="financing-body" style="margin:0;">
             <h3 style="margin-bottom:2px;">What type of financing do you need?${storeNote}</h3>
-            <p style="margin:0;">FlexFi offers multiple options — pick the one that fits you best.</p>
+            <p style="margin:0;">Snap Finance offers multiple options — pick the one that fits you best.</p>
           </div>
         </div>
       </div>
@@ -1686,7 +1710,7 @@ function handleFinancingTypeSelection(typeKey) {
   if (!ft) return;
   const storeName = state.pendingFinancingStore;
   appendUserMsg(ft.title);
-  appendAiMsg(`Great choice! Here's everything you need to know about <strong>${ft.title}</strong> through FlexFi.`);
+  appendAiMsg(`Great choice! Here's everything you need to know about <strong>${ft.title}</strong> through Snap Finance.`);
   renderFinancingDetailCard(typeKey, storeName);
 }
 
@@ -1699,7 +1723,7 @@ function showWelcome() {
     { label: "🛏️ Mattress under $300", q: "I need a mattress within $300" },
     { label: "💍 Jewelry in Las Vegas", q: "jewelry store near Las Vegas" },
     { label: "🚗 Rubber for my car", q: "I want rubber for my car" },
-    { label: "🏢 Does a store take FlexFi?", q: "Does House of Furniture take FlexFi?" },
+    { label: "🏢 Does a store take Snap Finance?", q: "Does House of Furniture take Snap Finance?" },
   ];
   document.getElementById("chat-thread").innerHTML = `
     <div class="welcome-state">
@@ -1736,8 +1760,8 @@ function attrJson(v) {
    CATEGORY BROWSE VIEW — Klarna-style fast path
    Reached by clicking a category/subcategory row in the search
    dropdown. Structured, filterable, sortable — no round trip through
-   the AI. Free-text queries still go to the FlexAI chat below via
-   the "Ask FlexAI" link or the hero search bar's direct-search row.
+   the AI. Free-text queries still go to the Snap AI chat below via
+   the "Ask Snap AI" link or the hero search bar's direct-search row.
 ════════════════════════════════════════════════════════════ */
 
 function setCurrentLocation(city, zip) {
@@ -1791,15 +1815,13 @@ function setViewMode(mode) {
 // Financing product names (LTO/RIC/Loan) are internal jargon — shoppers
 // don't parse them and don't need to. The card just says financing is
 // available; which product applies is a checkout-time detail, not a filter.
+// No category badge here — the page title/breadcrumb above already say
+// it once, and every card in this grid is the same category anyway.
 function renderCategoryStoreCard(s) {
-  const cfg = CAT_CONFIG[s.category];
   const stars = "★".repeat(Math.floor(s.rating)) + (s.rating % 1 >= 0.5 ? "★" : "");
   return `
     <div class="store-card">
-      <div class="store-card-top">
-        <div class="store-name">${escHtml(s.name)}</div>
-        <span class="category-badge ${cfg.cls}">${cfg.emoji} ${cfg.label}</span>
-      </div>
+      <div class="store-name">${escHtml(s.name)}</div>
       <div class="store-address">📍 ${escHtml(s.address)}, ${escHtml(s.city)}, ${escHtml(s.state)} ${escHtml(s.zip)}</div>
       <div class="store-phone"><a href="tel:${s.phone}">${escHtml(s.phone)}</a></div>
       <div class="store-rating">
@@ -1807,7 +1829,7 @@ function renderCategoryStoreCard(s) {
         <span>${s.rating.toFixed(1)}</span>
         <span class="rating-count">(${s.reviews} reviews)</span>
       </div>
-      <span class="snap-badge">✓ FlexFi Financing Accepted</span>
+      <span class="snap-badge">✓ Financing Accepted</span>
       <div class="store-cta"><a href="#">View Store →</a></div>
     </div>`;
 }
@@ -1816,6 +1838,7 @@ function renderCategoryView() {
   const { catKey, sort, mode, brand, priceFilter, priceSort } = state.categoryView;
   const cfg = CAT_CONFIG[catKey];
   const loc = state.currentLocation;
+  updateGeoButtonState();
 
   // ── Breadcrumb — flat: Find a Store / {Category}, no subcategory level.
   // Snap's real taxonomy has no drill-down; a brand narrows Marketplace only. ──
@@ -1856,7 +1879,7 @@ function renderCategoryView() {
     document.getElementById("cv-results").innerHTML = `
       <div class="cv-empty">
         <span class="cv-empty-icon">💳</span>
-        <p>Online ${cfg.label.toLowerCase()} partners are coming soon. Switch to <strong>In-Store</strong> to see FlexFi-approved locations near you today.</p>
+        <p>Online ${cfg.label.toLowerCase()} partners are coming soon. Switch to <strong>In-Store</strong> to see Snap Finance-approved locations near you today.</p>
       </div>`;
     orderResultSections(false);
     return;
@@ -1889,15 +1912,15 @@ function renderCategoryView() {
 
   // ── Results count + grid — location is just text here, not a separate
   // component: "near Austin" once known, a plain hint to add one if not. ──
-  let countHtml = `<strong>${results.length}</strong> ${escHtml(cfg.label)} store${results.length === 1 ? "" : "s"}`;
+  let countHtml = `<strong>${results.length}</strong> store${results.length === 1 ? "" : "s"}`;
   countHtml += locLabel
     ? ` near <strong>${escHtml(locLabel)}</strong>`
-    : ` <span class="cv-loc-hint">— add a city to your search above to see stores near you</span>`;
+    : ` <span class="cv-loc-hint">— add a city to your search, or tap 📍 in the search bar, to see stores near you</span>`;
   document.getElementById("cv-results-count").innerHTML = countHtml;
 
   let gridHtml = "";
   if (usedFallback) {
-    gridHtml += `<div class="fallback-banner">⚠️ No ${cfg.label.toLowerCase()} stores found near ${escHtml(locLabel)} — showing other FlexFi-approved ${cfg.label.toLowerCase()} stores</div>`;
+    gridHtml += `<div class="fallback-banner">⚠️ None found near ${escHtml(locLabel)} — showing other nearby options</div>`;
   }
   if (results.length === 0) {
     gridHtml += `<div class="cv-empty"><span class="cv-empty-icon">🔍</span><p>No stores in this category yet.</p></div>`;
@@ -1975,12 +1998,12 @@ async function handleSearch() {
 
   // Greeting
   if (intent.type === "greeting") {
-    appendAiMsg(`👋 Hi there! I'm FlexAI — I help you find FlexFi-approved stores near you.<br><br>
+    appendAiMsg(`👋 Hi there! I'm Snap AI — I help you find Snap Finance-approved stores near you.<br><br>
       Try asking:<br>
       • <em>"I need tires in San Jose"</em><br>
       • <em>"Furniture store near 78701"</em><br>
       • <em>"How do I apply for financing?"</em><br>
-      • <em>"Does House of Furniture take FlexFi?"</em>`);
+      • <em>"Does House of Furniture take Snap Finance?"</em>`);
     return;
   }
 
@@ -1989,7 +2012,7 @@ async function handleSearch() {
     const store = intent.storeName ? findStoreByName(intent.storeName) : null;
     const storeName = store ? store.name : (intent.storeName || null);
 
-    let aiText = `FlexFi offers several financing options — let me help you find the right one.`;
+    let aiText = `Snap Finance offers several financing options — let me help you find the right one.`;
     if (storeName && store) {
       aiText += ` I found <strong>${escHtml(store.name)}</strong> in our partner network ✅.`;
     } else if (storeName) {
@@ -2007,7 +2030,7 @@ async function handleSearch() {
     if (intent.storeName) {
       const store = findStoreByName(intent.storeName);
       if (store) {
-        appendAiMsg(`I found <strong>${escHtml(store.name)}</strong> in our network! ✅ FlexFi financing is accepted there.`);
+        appendAiMsg(`I found <strong>${escHtml(store.name)}</strong> in our network! ✅ Snap Finance financing is accepted there.`);
         renderFinancingCard(store.name);
         return;
       }
@@ -2046,7 +2069,7 @@ async function handleFollowUp(rawQuery) {
     }
     if (matched) {
       const storeName = state.pendingFinancingStore;
-      appendAiMsg(`Great choice! Here's everything you need to know about <strong>${FINANCING_TYPES[matched].title}</strong> through FlexFi.`);
+      appendAiMsg(`Great choice! Here's everything you need to know about <strong>${FINANCING_TYPES[matched].title}</strong> through Snap Finance.`);
       renderFinancingDetailCard(matched, storeName);
       return;
     }
@@ -2060,7 +2083,7 @@ async function handleFollowUp(rawQuery) {
   if (intent.type === "financing") {
     state.awaitingCategory = false;
     state.pendingIntent = null;
-    appendAiMsg(`Sure! FlexFi offers multiple financing options. Which type works best for you?`);
+    appendAiMsg(`Sure! Snap Finance offers multiple financing options. Which type works best for you?`);
     renderFinancingCard(null);
     return;
   }
@@ -2121,13 +2144,13 @@ function runSearch(intent) {
 
   if (stores.length > 0) {
     appendAiMsg(
-      `Found <strong>${stores.length} ${cfg ? cfg.label : ""} store${stores.length > 1 ? "s" : ""}</strong> near <strong>${locStr}</strong> that accept FlexFi financing! 🎉${priceNote}`
+      `Found <strong>${stores.length} ${cfg ? cfg.label : ""} store${stores.length > 1 ? "s" : ""}</strong> near <strong>${locStr}</strong> that accept Snap Finance financing! 🎉${priceNote}`
     );
   } else {
     const fallback = fallbackSearch(intent);
     if (fallback.length > 0) {
       appendAiMsg(
-        `I didn't find ${cfg ? cfg.label.toLowerCase() : "stores"} in <strong>${locStr}</strong>, but here are some <strong>${cfg ? cfg.label.toLowerCase() : ""} stores</strong> that accept FlexFi financing nearby.${priceNote}`
+        `I didn't find ${cfg ? cfg.label.toLowerCase() : "stores"} in <strong>${locStr}</strong>, but here are some <strong>${cfg ? cfg.label.toLowerCase() : ""} stores</strong> that accept Snap Finance financing nearby.${priceNote}`
       );
     } else {
       appendAiMsg(`Hmm, I couldn't find any stores matching your search. Try a different city or category, or <a href="#apply-lto" style="color:var(--green);font-weight:600;">apply for financing</a> and find a partner store after approval.`);
@@ -2178,7 +2201,7 @@ function getAiPanelHint(q) {
   for (const h of AI_HINTS) {
     if (h.trigger.test(q)) return h.hint;
   }
-  return "Ask me anything — describe what you need and I'll find FlexFi-approved stores near you.";
+  return "Ask me anything — describe what you need and I'll find Snap Finance-approved stores near you.";
 }
 
 function onSearchInput() {
@@ -2226,7 +2249,7 @@ function updateDropdown(q) {
     const extraClass = s.type === 'direct' ? ' direct-search' : '';
 
     // Taxonomy rows jump straight into the filtered category view (fast path).
-    // Everything else hands off to FlexAI conversational search (flexible path).
+    // Everything else hands off to Snap AI conversational search (flexible path).
     const clickHandler = s.type === 'taxonomy-cat'
       ? `openCategoryView(${attrJson(s.catKey)})`
       : s.type === 'taxonomy-brand'
