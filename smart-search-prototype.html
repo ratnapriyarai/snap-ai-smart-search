@@ -92,6 +92,16 @@
 
     /* ── Search Bar ───────────────────────────────────────── */
     .search-wrapper { max-width: 560px; margin: 0; position: relative; }
+    /* Echoes back the last query actually run — the search bar itself
+       clears after submit, so this is the only on-screen record of what
+       produced the results below. Empty/hidden until a real search runs. */
+    .search-echo {
+      max-width: 560px; margin: 10px 0 0; padding: 0 4px;
+      font-size: 12.5px; color: var(--dark-60);
+      display: none; align-items: center; gap: 5px;
+    }
+    .search-echo.visible { display: flex; }
+    .search-echo strong { color: var(--dark); font-weight: 600; }
     .search-bar {
       display: flex; align-items: center;
       background: var(--white); border: 2px solid var(--gray-200);
@@ -736,6 +746,7 @@
       </div>
     </div>
   </div>
+  <div class="search-echo" id="search-echo"></div>
  </div>
 </section>
 
@@ -1893,6 +1904,10 @@ function openCategoryView(catKey, filters = {}, opts = {}) {
     priceFilter: filters.priceFilter || null,
     priceSort: filters.priceSort || null,
     transactionType: filters.transactionType || null,
+    // Only set when this view came from an actual typed/spoken query — a
+    // plain category-pill click or the default landing view has nothing to
+    // echo, so the "you searched" line stays hidden for those.
+    rawQuery: filters.rawQuery || null,
   };
   const section = document.getElementById("category-view");
   section.classList.add("open");
@@ -1935,10 +1950,23 @@ function renderCategoryStoreCard(s) {
 }
 
 function renderCategoryView() {
-  const { catKey, sort, mode, brand, priceFilter, priceSort } = state.categoryView;
+  const { catKey, sort, mode, brand, priceFilter, priceSort, rawQuery } = state.categoryView;
   const cfg = CAT_CONFIG[catKey];
   const loc = state.currentLocation;
   updateGeoButtonState();
+
+  // "You searched" echo, just under the search bar — the input itself
+  // clears right after submit, so this is the only on-screen record of
+  // what actually produced the results below. Hidden for pill clicks / the
+  // default landing view, which have no typed query to echo.
+  const echoEl = document.getElementById("search-echo");
+  if (rawQuery) {
+    echoEl.innerHTML = `You searched: <strong>"${escHtml(rawQuery)}"</strong>`;
+    echoEl.classList.add("visible");
+  } else {
+    echoEl.classList.remove("visible");
+    echoEl.textContent = "";
+  }
 
   // No breadcrumb/title here — the active category pill below is the only
   // place the category name needs to show; a brand match already gets its
@@ -2291,6 +2319,12 @@ async function handleFollowUp(rawQuery) {
     // Same idea for "near me": if the original query said it but this
     // follow-up reply is just the category name, don't lose that signal.
     if (!intent.useMyLocation && pending.useMyLocation) mergedIntent.useMyLocation = true;
+    // Same idea for the on-screen "you searched" echo: {...pending, ...intent}
+    // above just overwrote rawQuery with the follow-up reply alone (e.g.
+    // "Denver") — combine both so the echo still reads as the full ask.
+    if (pending.rawQuery && pending.rawQuery !== intent.rawQuery) {
+      mergedIntent.rawQuery = `${pending.rawQuery} — ${intent.rawQuery}`;
+    }
     if (!mergedIntent.category) {
       appendAiMsg(`I didn't quite catch that. Could you specify? E.g.: ${buildCategoryPromptHtml()}`);
       state.awaitingCategory = true;
@@ -2351,6 +2385,7 @@ function runSearch(intent) {
       priceFilter: intent.priceFilter,
       priceSort: intent.priceSort,
       transactionType: intent.transactionType,
+      rawQuery: intent.rawQuery,
     }, { skipScroll: false, keepSearchInput: true });
   }
 }
@@ -2435,9 +2470,9 @@ function updateDropdown(q) {
     // Taxonomy rows jump straight into the filtered category view (fast path).
     // Everything else hands off to Snap AI conversational search (flexible path).
     const clickHandler = s.type === 'taxonomy-cat'
-      ? `openCategoryView(${attrJson(s.catKey)})`
+      ? `openCategoryView(${attrJson(s.catKey)}, { rawQuery: ${attrJson(s.primary)} })`
       : s.type === 'taxonomy-brand'
-      ? `openCategoryView(${attrJson(s.catKey)}, { brand: ${attrJson(s.brand)} })`
+      ? `openCategoryView(${attrJson(s.catKey)}, { brand: ${attrJson(s.brand)}, rawQuery: ${attrJson(s.primary)} })`
       : `fillAndSearch(${attrJson(s.query)});updateInputDisplay(${attrJson(s.query)})`;
 
     return `<div class="suggestion-item${extraClass}" onclick="${clickHandler}">
