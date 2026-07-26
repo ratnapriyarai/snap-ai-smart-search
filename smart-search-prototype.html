@@ -328,11 +328,6 @@
     .cat-medical     { background: #dcfce7; color: #166534; }
     .cat-musical     { background: #fce7f3; color: #9d174d; }
     .cat-other       { background: var(--gray-100); color: var(--dark-60); }
-    /* Financing-type badges — mirror the LEASE-TO-OWN/etc. pills on the real find-stores page */
-    .financing-badge      { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; letter-spacing:.3px; padding:3px 10px; border-radius:20px; text-transform:uppercase; white-space:nowrap; }
-    .financing-badge.lto  { background:#dbeafe; color:#1e40af; }
-    .financing-badge.ric  { background:#fef3c7; color:#92400e; }
-    .financing-badge.loan { background:#dcfce7; color:#166534; }
     .store-address  { font-size: 13px; color: var(--dark-60); line-height: 1.4; }
     .store-phone    { font-size: 13px; color: var(--green); font-weight: 600; }
     .store-phone a  { color: inherit; }
@@ -570,18 +565,12 @@
       background: var(--amber-light); border: 1px solid var(--amber);
       border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: #92400e;
     }
-    .cv-loc-prompt input {
-      border: 1px solid var(--gray-200); border-radius: 20px; padding: 7px 14px;
-      font-size: 13px; font-family: inherit; outline: none; min-width: 170px; background: white;
-    }
-    .cv-loc-prompt input:focus { border-color: var(--green); }
     .cv-loc-prompt button {
       background: var(--green); color: white; border: none; border-radius: 20px;
       padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+      display: inline-flex; align-items: center; gap: 6px;
     }
     .cv-loc-prompt button:hover { background: var(--green-dark); }
-    .cv-loc-prompt button.cv-geo-btn { background: white; color: var(--green); border: 1.5px solid var(--green); }
-    .cv-loc-prompt button.cv-geo-btn:hover { background: var(--green-light); }
 
     .cv-mode-toggle { display: inline-flex; background: var(--gray-100); border-radius: 20px; padding: 3px; margin-bottom: 20px; }
     .cv-mode-btn {
@@ -636,7 +625,11 @@
     /* ── Snap Marketplace section — a second, independent result source:
        real prices/brands, no location (ships to you), vs. the locator's
        real addresses and no price data. ── */
-    .cv-marketplace-section { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--gray-200); }
+    /* Generic separator for whichever result section (Stores/Marketplace)
+       isn't first — reordered by JS based on match confidence, so this has
+       to key off DOM position, not a fixed section. */
+    .cv-section-block { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--gray-200); }
+    .cv-section-block:first-child { margin-top: 0; padding-top: 0; border-top: none; }
     .cv-mp-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
     .cv-mp-title { font-size: 17px; font-weight: 700; color: var(--dark); display: flex; align-items: center; gap: 8px; }
     .cv-mp-sub { font-size: 12.5px; color: var(--dark-60); margin-bottom: 16px; }
@@ -806,39 +799,42 @@
 
     <div class="cv-pills" id="cv-pills"></div>
 
-    <div class="cv-body">
-      <aside class="cv-sidebar">
-        <div class="cv-filter-group">
-          <h4>Financing Type</h4>
-          <div class="cv-filter-list" id="cv-filter-financing"></div>
+    <!-- Both result sections live here so JS can reorder them: whichever
+         source has the more specific match (e.g. an exact brand hit on
+         Marketplace) renders first — see renderCategoryView(). -->
+    <div id="cv-sections">
+      <div class="cv-section-block" id="cv-stores-block">
+        <div class="cv-body">
+          <aside class="cv-sidebar">
+            <div class="cv-filter-group">
+              <h4>Rating</h4>
+              <div class="cv-filter-list" id="cv-filter-rating"></div>
+            </div>
+          </aside>
+          <div>
+            <div class="cv-results-bar">
+              <div class="cv-results-count" id="cv-results-count"></div>
+              <select class="cv-sort-select" id="cv-sort-select" onchange="setSort(this.value)">
+                <option value="best">Sort: Best Match</option>
+                <option value="rating">Sort: Highest Rated</option>
+                <option value="reviews">Sort: Most Reviewed</option>
+              </select>
+            </div>
+            <div id="cv-results"></div>
+          </div>
         </div>
-        <div class="cv-filter-group">
-          <h4>Rating</h4>
-          <div class="cv-filter-list" id="cv-filter-rating"></div>
-        </div>
-      </aside>
-      <div>
-        <div class="cv-results-bar">
-          <div class="cv-results-count" id="cv-results-count"></div>
-          <select class="cv-sort-select" id="cv-sort-select" onchange="setSort(this.value)">
-            <option value="best">Sort: Best Match</option>
-            <option value="rating">Sort: Highest Rated</option>
-            <option value="reviews">Sort: Most Reviewed</option>
-          </select>
-        </div>
-        <div id="cv-results"></div>
       </div>
-    </div>
 
-    <!-- Snap Marketplace — second, independent result source (real prices/
-         brands, ships anywhere) shown alongside the local store results above. -->
-    <div class="cv-marketplace-section">
-      <div class="cv-mp-header">
-        <div class="cv-mp-title" id="cv-mp-title">🛍️ Also on Snap Marketplace</div>
-        <a class="cv-mp-link" href="https://shop.snapfinance.com" target="_blank" rel="noopener">Shop all of Marketplace →</a>
+      <!-- Snap Marketplace — second, independent result source (real prices/
+           brands, ships anywhere) shown alongside the local store results. -->
+      <div class="cv-section-block" id="cv-marketplace-block">
+        <div class="cv-mp-header">
+          <div class="cv-mp-title" id="cv-mp-title">🛍️ Also on Snap Marketplace</div>
+          <a class="cv-mp-link" href="https://shop.snapfinance.com" target="_blank" rel="noopener">Shop all of Marketplace →</a>
+        </div>
+        <p class="cv-mp-sub" id="cv-mp-sub">Ships anywhere — buy now or pay weekly, no store visit needed.</p>
+        <div id="cv-marketplace"></div>
       </div>
-      <p class="cv-mp-sub" id="cv-mp-sub">Ships anywhere — buy now or pay weekly, no store visit needed.</p>
-      <div id="cv-marketplace"></div>
     </div>
   </div>
 </section>
@@ -1450,7 +1446,6 @@ const state = {
   currentLocation: { city: null, zip: null },
   categoryView: {
     catKey: null, sort: "best", minRating: 0, mode: "in-store",
-    financingFilter: null,   // "lto" | "ric" | "loan" | null (any)
     brand: null,             // Marketplace-only filter
     priceFilter: null,       // { min?, max? } — applies to Marketplace prices
     priceSort: null,         // "asc" | "desc" — applies to Marketplace sort
@@ -1793,10 +1788,6 @@ function openCategoryView(catKey, filters = {}, opts = {}) {
   }
   state.categoryView = {
     catKey, sort: "best", minRating: 0, mode: "in-store",
-    // "rent"/"rental"/"lease" in the query pre-selects Lease-to-Own —
-    // Snap's rent-like financing product — as a starting filter, not a lock;
-    // the user can still clear it from the sidebar.
-    financingFilter: filters.transactionType === "rent" ? "lto" : null,
     brand: filters.brand || null,
     priceFilter: filters.priceFilter || null,
     priceSort: filters.priceSort || null,
@@ -1819,10 +1810,6 @@ function switchToAiSearch() {
   setTimeout(() => document.getElementById("search-input").focus(), 350);
 }
 
-function setFinancingFilter(value) {
-  state.categoryView.financingFilter = value || null;
-  renderCategoryView();
-}
 function setSort(value) {
   state.categoryView.sort = value;
   renderCategoryView();
@@ -1836,26 +1823,14 @@ function setViewMode(mode) {
   renderCategoryView();
 }
 
+// "Change" location — there's deliberately no second text field for this.
+// One search bar handles product AND location together (parseIntent already
+// pulls a city/ZIP out of the same sentence), so "changing" location just
+// means typing a new search that includes it.
 function promptCategoryLocation() {
   state.currentLocation = { city: null, zip: null };
   renderCategoryView();
-  setTimeout(() => document.getElementById("cv-loc-input")?.focus(), 50);
-}
-
-function submitCategoryLocation() {
-  const input = document.getElementById("cv-loc-input");
-  if (!input) return;
-  const raw = input.value.trim();
-  if (!raw) return;
-  const zipMatch = raw.match(/\b\d{5}\b/);
-  if (zipMatch) {
-    setCurrentLocation(null, zipMatch[0]);
-  } else {
-    const key = raw.toLowerCase();
-    const canonical = CITY_CANONICAL[key] || raw.replace(/\b\w/g, c => c.toUpperCase());
-    setCurrentLocation(canonical, null);
-  }
-  renderCategoryView();
+  switchToAiSearch();
 }
 
 async function useMyLocationForCategory() {
@@ -1874,10 +1849,12 @@ async function useMyLocationForCategory() {
   );
 }
 
+// Financing product names (LTO/RIC/Loan) are internal jargon — shoppers
+// don't parse them and don't need to. The card just says financing is
+// available; which product applies is a checkout-time detail, not a filter.
 function renderCategoryStoreCard(s) {
   const cfg = CAT_CONFIG[s.category];
   const stars = "★".repeat(Math.floor(s.rating)) + (s.rating % 1 >= 0.5 ? "★" : "");
-  const ft = FINANCING_TYPES[s.financingType];
   return `
     <div class="store-card">
       <div class="store-card-top">
@@ -1891,14 +1868,13 @@ function renderCategoryStoreCard(s) {
         <span>${s.rating.toFixed(1)}</span>
         <span class="rating-count">(${s.reviews} reviews)</span>
       </div>
-      ${ft ? `<span class="financing-badge ${s.financingType}">${ft.icon} ${escHtml(ft.title)}</span>` : ""}
       <span class="snap-badge">✓ FlexFi Financing Accepted</span>
       <div class="store-cta"><a href="#">View Store →</a></div>
     </div>`;
 }
 
 function renderCategoryView() {
-  const { catKey, sort, minRating, mode, financingFilter, brand, priceFilter, priceSort } = state.categoryView;
+  const { catKey, sort, minRating, mode, brand, priceFilter, priceSort } = state.categoryView;
   const cfg = CAT_CONFIG[catKey];
   const loc = state.currentLocation;
 
@@ -1917,8 +1893,10 @@ function renderCategoryView() {
     ? `FlexFi-approved ${cfg.label.toLowerCase()} stores, plus ${brand} products on Snap Marketplace.`
     : `Browse every FlexFi-approved ${cfg.label.toLowerCase()} store, or narrow it down below.`;
 
-  // ── Location row: chip if known, non-blocking prompt if not (never blocks
-  // results — narrower results are a bonus, not a gate) ──
+  // ── Location row: chip if known, non-blocking hint if not (never blocks
+  // results — narrower results are a bonus, not a gate). No second text
+  // field here — the one search bar above already parses a city/ZIP out of
+  // the same sentence, so "Change" just points back to it. ──
   const locRow = document.getElementById("cv-locrow");
   if (loc.city || loc.zip) {
     const label = loc.city || `ZIP ${loc.zip}`;
@@ -1928,11 +1906,8 @@ function renderCategoryView() {
   } else {
     locRow.innerHTML = `
       <div class="cv-loc-prompt">
-        📍 Set your location to see stores near you first —
-        <input id="cv-loc-input" type="text" placeholder="City or ZIP" autocomplete="off"
-               onkeydown="if(event.key==='Enter')submitCategoryLocation()" />
-        <button onclick="submitCategoryLocation()">Go</button>
-        ${navigator.geolocation ? `<button class="cv-geo-btn" onclick="useMyLocationForCategory()">📍 Use my location</button>` : ""}
+        📍 Add a city to your search above to see stores near you first.
+        ${navigator.geolocation ? `<button onclick="useMyLocationForCategory()">📍 Use my location</button>` : ""}
       </div>`;
   }
 
@@ -1946,14 +1921,14 @@ function renderCategoryView() {
     `<div class="cv-pill${catKey === key ? " active" : ""}" onclick="openCategoryView('${key}')"><span class="cv-pill-emoji">${c.emoji}</span>${escHtml(c.label)}</div>`
   ).join("");
 
-  // ── Marketplace section renders regardless of In-Store/Online toggle —
-  // it's a genuinely separate source (ships anywhere), not a store-locator mode ──
-  renderMarketplaceSection({ catKey, cfg, brand, priceFilter, priceSort });
+  // ── Marketplace results computed here (not inside its render fn) so we
+  // can decide section order below from the same numbers we render ──
+  const mpResults = searchMarketplace({ category: catKey, brand, priceFilter, priceSort });
+  renderMarketplaceSection(brand, priceFilter, mpResults);
 
   // ── Online tab: honest empty state for STORE results — no fabricated
   // online inventory. (Marketplace above already covers "buy it online.") ──
   if (mode === "online") {
-    document.getElementById("cv-filter-financing").innerHTML = "";
     document.getElementById("cv-filter-rating").innerHTML = "";
     document.getElementById("cv-results-count").textContent = "";
     document.getElementById("cv-results").innerHTML = `
@@ -1961,6 +1936,7 @@ function renderCategoryView() {
         <span class="cv-empty-icon">💳</span>
         <p>Online ${cfg.label.toLowerCase()} partners are coming soon. Switch to <strong>In-Store</strong> to see FlexFi-approved locations near you today.</p>
       </div>`;
+    orderResultSections(false);
     return;
   }
 
@@ -1981,21 +1957,9 @@ function renderCategoryView() {
     if (inCity.length > 0) scoped = inCity; else usedFallback = true;
   }
 
-  // ── Sidebar: Financing Type — a real feature (each store card already
-  // badges LTO/RIC/Loan), unlike the invented subcategory list this replaced ──
-  const financingOptions = [null, "lto", "ric", "loan"];
-  document.getElementById("cv-filter-financing").innerHTML = financingOptions.map(key => {
-    const count = key ? scoped.filter(s => s.financingType === key).length : scoped.length;
-    const label = key ? FINANCING_TYPES[key].title : `All ${cfg.label}`;
-    const icon = key ? FINANCING_TYPES[key].icon : cfg.emoji;
-    return `<button class="cv-filter-item${financingFilter === key ? " active" : ""}" onclick="setFinancingFilter(${key ? `'${key}'` : "null"})">
-      <span>${icon} ${escHtml(label)}</span><span class="cv-filter-count">${count}</span>
-    </button>`;
-  }).join("");
-
   const ratingOptions = [{ v: 0, l: "Any rating" }, { v: 4, l: "4+ stars" }, { v: 4.5, l: "4.5+ stars" }];
   document.getElementById("cv-filter-rating").innerHTML = ratingOptions.map(r => {
-    const count = scoped.filter(st => (!financingFilter || st.financingType === financingFilter) && st.rating >= r.v).length;
+    const count = scoped.filter(st => st.rating >= r.v).length;
     return `<button class="cv-filter-item${minRating === r.v ? " active" : ""}" onclick="setRatingFilter(${r.v})">
       <span>${escHtml(r.l)}</span><span class="cv-filter-count">${count}</span>
     </button>`;
@@ -2003,7 +1967,6 @@ function renderCategoryView() {
 
   // ── Final filter + sort ──
   let results = scoped;
-  if (financingFilter) results = results.filter(s => s.financingType === financingFilter);
   if (minRating) results = results.filter(s => s.rating >= minRating);
   results = [...results].sort((a, b) => {
     if (sort === "reviews") return b.reviews - a.reviews;
@@ -2022,11 +1985,28 @@ function renderCategoryView() {
     gridHtml += `<div class="fallback-banner">⚠️ No ${cfg.label.toLowerCase()} stores found near ${escHtml(locLabel)} — showing other FlexFi-approved ${cfg.label.toLowerCase()} stores</div>`;
   }
   if (results.length === 0) {
-    gridHtml += `<div class="cv-empty"><span class="cv-empty-icon">🔍</span><p>No stores match these filters. Try clearing the rating or financing-type filter.</p></div>`;
+    gridHtml += `<div class="cv-empty"><span class="cv-empty-icon">🔍</span><p>No stores match this rating filter. Try clearing it.</p></div>`;
   } else {
     gridHtml += `<div class="stores-grid">${results.map(renderCategoryStoreCard).join("")}</div>`;
   }
   document.getElementById("cv-results").innerHTML = gridHtml;
+
+  // ── Section order: an exact brand match on Marketplace is a stronger,
+  // more specific signal than a generic category browse of local stores —
+  // lead with it. A bare category browse (no brand) leads with Stores,
+  // since that's the locator's core job. ──
+  orderResultSections(!!brand && mpResults.length > 0);
+}
+
+// Moves whichever section is more relevant to the top of #cv-sections.
+// Actual DOM reordering (not CSS `order`) so `.cv-section-block:first-child`
+// picks up the right separator styling automatically.
+function orderResultSections(marketplaceFirst) {
+  const wrap = document.getElementById("cv-sections");
+  const stores = document.getElementById("cv-stores-block");
+  const marketplace = document.getElementById("cv-marketplace-block");
+  if (marketplaceFirst) wrap.insertBefore(marketplace, stores);
+  else wrap.insertBefore(stores, marketplace);
 }
 
 function renderMarketplaceCard(p) {
@@ -2045,10 +2025,9 @@ function renderMarketplaceCard(p) {
     </div>`;
 }
 
-function renderMarketplaceSection({ catKey, cfg, brand, priceFilter, priceSort }) {
-  const results = searchMarketplace({ category: catKey, brand, priceFilter, priceSort });
+function renderMarketplaceSection(brand, priceFilter, results) {
   document.getElementById("cv-mp-title").textContent = brand
-    ? `🛍️ ${brand} on Snap Marketplace`
+    ? `🛍️ ${brand} on Snap Marketplace${results.length ? " — exact match" : ""}`
     : `🛍️ Also on Snap Marketplace`;
   document.getElementById("cv-mp-sub").textContent = priceFilter
     ? `Ships anywhere — filtered to your price range, no store visit needed.`
