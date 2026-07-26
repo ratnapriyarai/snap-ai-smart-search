@@ -551,26 +551,9 @@
     }
     .cv-ai-link:hover { background: #ddf0e5; }
 
-    .cv-locrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13px; }
-    .cv-loc-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--green-light); color: var(--green-dark); font-weight: 700;
-      padding: 6px 12px; border-radius: 20px;
-    }
-    .cv-loc-change { color: var(--blue); font-weight: 600; cursor: pointer; }
-    .cv-loc-change:hover { text-decoration: underline; }
-
-    .cv-loc-prompt {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      background: var(--amber-light); border: 1px solid var(--amber);
-      border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: #92400e;
-    }
-    .cv-loc-prompt button {
-      background: var(--green); color: white; border: none; border-radius: 20px;
-      padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .cv-loc-prompt button:hover { background: var(--green-dark); }
+    /* Location has no dedicated UI area — it's just text in the results line
+       ("near Austin" / a hint to add one), same as the rest of the query. */
+    .cv-loc-hint { color: var(--dark-60); font-weight: 400; }
 
     .cv-mode-toggle { display: inline-flex; background: var(--gray-100); border-radius: 20px; padding: 3px; margin-bottom: 20px; }
     .cv-mode-btn {
@@ -789,8 +772,6 @@
       </div>
       <span class="cv-ai-link" onclick="switchToAiSearch()">✦ Can't find it? Ask FlexAI</span>
     </div>
-
-    <div id="cv-locrow"></div>
 
     <div class="cv-mode-toggle">
       <button class="cv-mode-btn" id="cv-mode-instore" onclick="setViewMode('in-store')">🏬 In-Store</button>
@@ -1823,32 +1804,6 @@ function setViewMode(mode) {
   renderCategoryView();
 }
 
-// "Change" location — there's deliberately no second text field for this.
-// One search bar handles product AND location together (parseIntent already
-// pulls a city/ZIP out of the same sentence), so "changing" location just
-// means typing a new search that includes it.
-function promptCategoryLocation() {
-  state.currentLocation = { city: null, zip: null };
-  renderCategoryView();
-  switchToAiSearch();
-}
-
-async function useMyLocationForCategory() {
-  if (!navigator.geolocation) return;
-  if (geoState.fetched && (geoState.city || geoState.zip)) {
-    setCurrentLocation(geoState.city, geoState.zip);
-    renderCategoryView();
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    async pos => {
-      await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-      renderCategoryView();
-    },
-    () => { /* denied — location prompt stays visible, user can type instead */ }
-  );
-}
-
 // Financing product names (LTO/RIC/Loan) are internal jargon — shoppers
 // don't parse them and don't need to. The card just says financing is
 // available; which product applies is a checkout-time detail, not a filter.
@@ -1893,23 +1848,10 @@ function renderCategoryView() {
     ? `FlexFi-approved ${cfg.label.toLowerCase()} stores, plus ${brand} products on Snap Marketplace.`
     : `Browse every FlexFi-approved ${cfg.label.toLowerCase()} store, or narrow it down below.`;
 
-  // ── Location row: chip if known, non-blocking hint if not (never blocks
-  // results — narrower results are a bonus, not a gate). No second text
-  // field here — the one search bar above already parses a city/ZIP out of
-  // the same sentence, so "Change" just points back to it. ──
-  const locRow = document.getElementById("cv-locrow");
-  if (loc.city || loc.zip) {
-    const label = loc.city || `ZIP ${loc.zip}`;
-    locRow.innerHTML = `
-      <span class="cv-loc-chip">📍 Shopping in ${escHtml(label)}</span>
-      <span class="cv-loc-change" onclick="promptCategoryLocation()">Change</span>`;
-  } else {
-    locRow.innerHTML = `
-      <div class="cv-loc-prompt">
-        📍 Add a city to your search above to see stores near you first.
-        ${navigator.geolocation ? `<button onclick="useMyLocationForCategory()">📍 Use my location</button>` : ""}
-      </div>`;
-  }
+  // Location has no dedicated UI area — it's just part of the same sentence
+  // typed into the one search bar above (parseIntent already pulls a city/
+  // ZIP out of it), and shows up as plain text in the results line below
+  // ("near Austin") rather than a chip, banner, or second field.
 
   // ── Mode toggle ──
   document.getElementById("cv-mode-instore").classList.toggle("active", mode === "in-store");
@@ -1975,9 +1917,12 @@ function renderCategoryView() {
     return b.rating - a.rating || b.reviews - a.reviews;
   });
 
-  // ── Results count + grid ──
+  // ── Results count + grid — location is just text here, not a separate
+  // component: "near Austin" once known, a plain hint to add one if not. ──
   let countHtml = `<strong>${results.length}</strong> ${escHtml(cfg.label)} store${results.length === 1 ? "" : "s"}`;
-  if (locLabel) countHtml += ` near <strong>${escHtml(locLabel)}</strong>`;
+  countHtml += locLabel
+    ? ` near <strong>${escHtml(locLabel)}</strong>`
+    : ` <span class="cv-loc-hint">— add a city to your search above to see stores near you</span>`;
   document.getElementById("cv-results-count").innerHTML = countHtml;
 
   let gridHtml = "";
