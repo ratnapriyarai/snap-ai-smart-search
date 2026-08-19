@@ -217,6 +217,25 @@
     .suggestion-item.direct-search .suggestion-primary { color: var(--green); }
     .dropdown-divider { height: 1px; background: var(--gray-200); margin: 6px 0; }
 
+    /* Apply for Financing — a direct action, always shown regardless of
+       what's typed, since it doesn't require picking a merchant/category
+       first (unlike everything else in the dropdown). */
+    .finance-apply-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px; cursor: pointer; transition: background .1s;
+      text-decoration: none; color: inherit;
+    }
+    .finance-apply-row:hover { background: var(--gray-100); }
+    .finance-apply-icon {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      background: var(--blue-light); color: var(--blue);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .finance-apply-body { flex: 1; min-width: 0; }
+    .finance-apply-title { font-size: 14px; font-weight: 700; color: var(--dark); }
+    .finance-apply-sub { font-size: 12px; color: var(--dark-60); margin-top: 1px; }
+    .finance-apply-arrow { color: var(--blue); font-weight: 700; flex-shrink: 0; }
+
     /* Ask Snap AI panel — Fix #8: stronger visual identity */
     .dropdown-ai-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -543,6 +562,18 @@
         <span style="font-weight:700;font-size:15px;">Search Snap Finance Stores</span>
         <button class="dropdown-close-btn" onclick="hideDropdown()">✕</button>
       </div>
+
+      <!-- Always shown, regardless of what's typed — applying for financing
+           doesn't require picking a merchant or category first. -->
+      <a class="finance-apply-row" href="#apply" target="_blank" rel="noopener">
+        <div class="finance-apply-icon">💳</div>
+        <div class="finance-apply-body">
+          <div class="finance-apply-title">Apply for Financing</div>
+          <div class="finance-apply-sub">No store selection needed — get approved in minutes</div>
+        </div>
+        <div class="finance-apply-arrow">→</div>
+      </a>
+      <div class="dropdown-divider"></div>
 
       <div id="suggestions-list"></div>
       <div class="dropdown-divider"></div>
@@ -1788,7 +1819,13 @@ function onSearchInput() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     const q = document.getElementById("search-input").value.trim();
-    if (q.length < 2) { hideDropdown(); return; }
+    if (q.length < 2) {
+      // Not enough to search yet, but keep the dropdown open — Apply for
+      // Financing (and Ask Snap AI) don't need a typed query to be useful.
+      document.getElementById("suggestions-list").innerHTML = "";
+      showDropdown();
+      return;
+    }
     updateDropdown(q);
     showDropdown();
   }, 200);
@@ -1885,7 +1922,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Escape") hideDropdown();
   });
   input.addEventListener("focus", () => {
-    if (input.value.trim().length >= 2) showDropdown();
+    // Always open on focus — Apply for Financing (and Ask Snap AI) should be
+    // reachable the moment someone clicks into the search bar, not only
+    // once they've typed a merchant/category term.
+    if (input.value.trim().length < 2) {
+      document.getElementById("suggestions-list").innerHTML = "";
+    }
+    showDropdown();
   });
   input.addEventListener("blur", () => setTimeout(hideDropdown, 200));
 
